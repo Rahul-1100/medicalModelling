@@ -1,0 +1,28 @@
+{
+  "base_model": "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract",
+  "vocab_size": 28903,
+  "special_tokens": [
+    "[ICD_START]",
+    "[ICD_END]",
+    "[ICD_CHAP]",
+    "[ICD_BLOCK]",
+    "[ICD_CAT]",
+    "[ICD_SUBCAT]",
+    "[ICD_DESC]",
+    "[ICD_SEP]"
+  ],
+  "num_codes": 72740,
+  "strategies": [
+    "description",
+    "hierarchical",
+    "hybrid",
+    "code_only",
+    "code_with_desc"
+  ],
+  "hierarchy_levels": [
+    "chapter",
+    "block",
+    "category",
+    "subcategory"
+  ]
+}

@@ -94,3 +94,7 @@ python train.py
 ## Output
 - `gemma_med_icd_adapter/` — LoRA adapter + custom tokenizer with 100 `<ICD_XX>` tokens
 - `icd10_unmapped_audit_report.csv` — Coverage audit results (if enabled)
+
+
+## TODO
+apply bert model and then see how can ICD10 code be fitted into the pipeline 
