@@ -1,0 +1,5 @@
+# Ignore dataset downloads
+FiscaAI___synth-ehr-icd10cm-prompt/
+data/
+*.arrow
+*.jsonl
