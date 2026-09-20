@@ -38,7 +38,9 @@ def normalize_code(code):
     A020 → A02.0
     T8040xA → T80.40xA (already handled by TXT parser - already has dot)
     """
-    code = str(code).strip().upper()
+    
+    # Strip whitespace AND stray quotes/punctuation that might corrupt the code
+    code = str(code).strip(" '\"").upper()
     if not code or code == 'NAN':
         return ''
     
@@ -151,29 +153,29 @@ def build_hierarchy(registry_df):
         if not code:
             continue
         
-        # Parse standard format: CATEGORY.SUBCATEGORY
         if '.' in code:
-            category, subcategory = code.split('.', 1)
+            category, _ = code.split('.', 1)
         else:
             category = code
-            subcategory = ''
         
-        # Chapter: first letter
+        # Chapter: 1st character (e.g., 'C')
         chapter = category[0] if category else ''
         
-        # Block: first 3 chars (chapter + 2 digits)
-        block = category[:3] if len(category) >= 3 else category
+        # Pseudo-Block: 1st + 2nd character (e.g., 'C8') - gives the model a stepping stone
+        block = category[:2] if len(category) >= 2 else category
         
-        # Category: full category part (e.g., A00, A01, T80, Y99)
-        # Subcategory: full code with dot
+        # Category: full 3 characters (e.g., 'C81')
+        category_level = category
+        
+        # Subcategory: full code (e.g., 'C81.71')
         full_code = code
         
         hierarchy[code] = {
             'chapter': chapter,
             'block': block,
-            'category': category,
+            'category': category_level,
             'subcategory': full_code,
-            'path': [chapter, block, category, full_code]
+            'path': [chapter, block, category_level, full_code]
         }
     
     return hierarchy
