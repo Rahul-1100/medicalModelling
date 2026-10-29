@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """
-train.py
+train_option2.py
 
 Train MedGemma-3-4B (Unsloth) on medical_meadow_wikidoc with ICD-10 integration.
-Approach: Hybrid - Text encoder + ICD-10 embedding layer + fusion
+Approach: Option 2 - Special Token Replacement (Unified Text Modality)
+
+ICD-10 codes in text are replaced with special tokens like <ICD10:A00.0>
+which are added to the text tokenizer's vocabulary. Single modality, simpler!
 
 Requirements:
 pip install unsloth transformers datasets torch accelerate peft trl wandb
@@ -14,11 +17,12 @@ import os
 os.environ["HF_HOME"] = "/mnt/data/medgemma_project/hf_cache"
 
 import json
+import re
 import random
 import argparse
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set
 
 import torch
 import torch.nn as nn
@@ -33,150 +37,190 @@ from unsloth import FastLanguageModel
 import wandb
 
 # ============================================================
-# TOKENIZER (Updated for Hugging Face artifact output)
+# CONFIGURATION
+# ============================================================
+
+# Special token format for ICD-10 codes in text
+ICD10_SPECIAL_TOKEN_PREFIX = "<ICD10:"
+ICD10_SPECIAL_TOKEN_SUFFIX = ">"
+ICD10_PATTERN = re.compile(r'\b[A-TV-Z][0-9][0-9AB]\.?[0-9A-TV-Z]{0,4}\b')
+
+# Maximum number of unique ICD-10 codes we expect to add as special tokens
+# This controls vocabulary expansion size
+MAX_ICD10_SPECIAL_TOKENS = 50000
+
+# ============================================================
+# ICD-10 TOKENIZER (for preprocessing only)
 # ============================================================
 
 class ICD10Tokenizer:
+    """Loads the saved ICD-10 tokenizer for code validation/preprocessing."""
     def __init__(self, artifacts_dir):
-        # Loads the saved tokenizer from your tokenizer.py script
         self.tokenizer = AutoTokenizer.from_pretrained(artifacts_dir)
             
     def __len__(self):
         return len(self.tokenizer)
         
     def get_indices(self, code: str) -> List[int]:
-        # encode() converts "A00.0" -> [10001, 10002, 45, ...] (approx 15-16 tokens)
         return self.tokenizer.encode(code, add_special_tokens=False)
+    
+    def is_valid_code(self, code: str) -> bool:
+        """Check if a string is a valid ICD-10 code in our vocabulary."""
+        try:
+            indices = self.tokenizer.encode(code, add_special_tokens=False)
+            # Valid if it tokenizes to something non-empty and not just UNK
+            return len(indices) > 0 and (len(indices) > 1 or indices[0] != self.tokenizer.unk_token_id)
+        except:
+            return False
 
 # ============================================================
-# ICD-10 EMBEDDING LAYER (Updated for 2D Sequence Padding)
+# SPECIAL TOKEN MANAGEMENT
 # ============================================================
 
-class FlattenedICD10Embedding(nn.Module):
+class ICD10SpecialTokenManager:
     """
-    Looks up tokens from the tokenizer (vocab ~28k) and flattens them 
-    so cross-attention can read the hierarchy sequentially.
+    Manages the mapping between ICD-10 codes and special tokens.
+    Builds a vocabulary of special tokens from the training data.
     """
-    def __init__(self, vocab_size, hidden_size=2560):
-        super().__init__()
-        self.embedding = nn.Embedding(vocab_size, hidden_size)
-
-    def forward(self, code_indices: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            code_indices: [Batch, N_codes (10), Seq_len (18)]
-        Returns:
-            [Batch, N_codes * Seq_len (180), Hidden (2560)]
-        """
-        B, N_codes, seq_len = code_indices.shape
-        
-        # Look up embeddings: [B, 10, 18, 2560]
-        embeds = self.embedding(code_indices)
-        
-        # Flatten N_codes and seq_len into a single sequence for cross-attention
-        flat_embeds = embeds.view(B, N_codes * seq_len, -1) 
-        
-        return flat_embeds
-
-# ============================================================
-# FUSION MODULE
-# ============================================================
-
-class ICD10FusionModule(nn.Module):
-    """
-    Fuses ICD-10 embeddings with MedGemma hidden states.
-    Uses cross-attention: ICD-10 codes attend to text representations.
-    """
-    def __init__(self, hidden_size=2560, num_heads=8, dropout=0.1):
-        super().__init__()
-        self.hidden_size = hidden_size
-        self.icd10_proj = nn.Linear(hidden_size, hidden_size)
-        
-        self.cross_attn = nn.MultiheadAttention(
-            hidden_size, num_heads, dropout=dropout, batch_first=True
-        )
-        
-        self.output_proj = nn.Linear(hidden_size, hidden_size)
-        self.norm = nn.LayerNorm(hidden_size)
-        self.dropout = nn.Dropout(dropout)
-
-    def forward(self, text_hidden: torch.Tensor, icd10_embeds: torch.Tensor,
-                text_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        
-        icd10_proj = self.icd10_proj(icd10_embeds)
-        
-        attn_out, _ = self.cross_attn(
-            query=icd10_proj,
-            key=text_hidden,
-            value=text_hidden,
-            key_padding_mask=~text_mask.bool() if text_mask is not None else None
-        )
-        
-        pooled_mean = attn_out.mean(dim=1)
-        pooled_max = attn_out.max(dim=1)[0]
-        pooled = pooled_mean + pooled_max
-        
-        out = self.output_proj(self.dropout(pooled))
-        return self.norm(out)
-
-# ============================================================
-# DATASET (Updated for 2D Padding [10 codes x 18 tokens])
-# ============================================================
-
-class MedicalMeadowICD10Dataset(Dataset):
-    def __init__(self, data_list, icd10_tokenizer, text_tokenizer, max_text_length=2048, max_codes=10, max_code_tokens=18):
-        self.dataset = data_list
+    def __init__(self, icd10_tokenizer: ICD10Tokenizer, max_tokens: int = MAX_ICD10_SPECIAL_TOKENS):
         self.icd10_tokenizer = icd10_tokenizer
+        self.max_tokens = max_tokens
+        self.code_to_special_token: Dict[str, str] = {}
+        self.special_token_to_code: Dict[str, str] = {}
+        self.special_tokens_list: List[str] = []
+        
+    def build_vocabulary_from_data(self, data_list: List[Dict]) -> List[str]:
+        """
+        Scan all data to find unique ICD-10 codes and create special tokens for them.
+        Returns list of special tokens to add to tokenizer.
+        """
+        print("Scanning dataset for ICD-10 codes...")
+        unique_codes: Set[str] = set()
+        
+        for item in data_list:
+            # Codes from the structured field
+            codes = item.get("codes", [])
+            for code in codes:
+                if self.icd10_tokenizer.is_valid_code(code):
+                    unique_codes.add(code)
+            
+            # Also scan text fields for ICD-10 patterns
+            for field in ["system", "user", "assistant"]:
+                text = item.get(field, "")
+                found_codes = ICD10_PATTERN.findall(text)
+                for code in found_codes:
+                    if self.icd10_tokenizer.is_valid_code(code):
+                        unique_codes.add(code)
+        
+        print(f"Found {len(unique_codes)} unique valid ICD-10 codes in dataset")
+        
+        # Limit to max_tokens most frequent (or just first N if no frequency info)
+        sorted_codes = sorted(list(unique_codes))[:self.max_tokens]
+        
+        # Create special tokens
+        self.special_tokens_list = []
+        for code in sorted_codes:
+            special_token = f"{ICD10_SPECIAL_TOKEN_PREFIX}{code}{ICD10_SPECIAL_TOKEN_SUFFIX}"
+            self.code_to_special_token[code] = special_token
+            self.special_token_to_code[special_token] = code
+            self.special_tokens_list.append(special_token)
+        
+        print(f"Created {len(self.special_tokens_list)} special tokens")
+        return self.special_tokens_list
+    
+    def replace_codes_in_text(self, text: str) -> str:
+        """Replace all ICD-10 codes in text with their special tokens."""
+        def replace_match(match):
+            code = match.group(0)
+            if code in self.code_to_special_token:
+                return self.code_to_special_token[code]
+            # If code not in our vocabulary, keep as-is (will be tokenized normally)
+            return code
+        
+        return ICD10_PATTERN.sub(replace_match, text)
+    
+    def get_special_tokens(self) -> List[str]:
+        return self.special_tokens_list
+    
+    def decode_special_tokens(self, text: str) -> str:
+        """Convert special tokens back to ICD-10 codes (for generation/output)."""
+        for special, code in self.special_token_to_code.items():
+            text = text.replace(special, code)
+        return text
+
+# ============================================================
+# DATASET (Unified Text Modality)
+# ============================================================
+
+class SynthAIICD10Dataset(Dataset):
+    """
+    Dataset that preprocesses text to replace ICD-10 codes with special tokens.
+    Single modality - only text tokenization needed!
+    """
+    def __init__(self, data_list, special_token_manager: ICD10SpecialTokenManager, 
+                 text_tokenizer, max_text_length=2048, choose_response: str = "icd10"):
+        self.dataset = data_list
+        self.special_token_manager = special_token_manager
         self.text_tokenizer = text_tokenizer
         self.max_text_length = max_text_length
-        self.max_codes = max_codes
-        self.max_code_tokens = max_code_tokens
+        self.response = choose_response
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx):
         item = self.dataset[idx]
-        conversation = f"### Question:\n{item['question']}\n\n### Answer:\n{item['answer']}"
+        system_prompt = item.get("system", "")
+        user_prompt = item.get("user", "")
         
+        assistant_response_icd10 = ""
+        assistant_response_explanation = ""
+        assistant_full = item.get("assistant", "")
+        
+        # Split assistant response if it contains codes + explanation
+        codes_str = ", ".join(item.get("codes", []))
+        if codes_str and codes_str + "\n\n" in assistant_full:
+            parts = assistant_full.split(codes_str + "\n\n", 1)
+            assistant_response_icd10 = parts[0] + codes_str
+            assistant_response_explanation = parts[1] if len(parts) > 1 else ""
+        else:
+            assistant_response_icd10 = assistant_full
+            assistant_response_explanation = assistant_full
+        
+        assistant_response = assistant_response_icd10 if self.response == "icd10" else assistant_response_explanation
+        
+        # Build conversation
+        conversation = f"### Question:\n{user_prompt}\n\n### Answer:\n{assistant_response}"
+        
+        # KEY STEP: Replace ICD-10 codes in text with special tokens
+        processed_conversation = self.special_token_manager.replace_codes_in_text(conversation)
+        
+        # Tokenize as regular text (single modality!)
         text_encoding = self.text_tokenizer(
-            conversation,
+            processed_conversation,
             truncation=True,
             max_length=self.max_text_length,
             padding="max_length",
             return_tensors="pt"
         )
         
-        raw_codes = item.get("icd10_codes", [])
-        
-        # Padded matrix of shape [10, 18] filled with 0s
-        padded_matrix = torch.zeros((self.max_codes, self.max_code_tokens), dtype=torch.long)
-        
-        for i, code in enumerate(raw_codes[:self.max_codes]):
-            code_tokens = self.icd10_tokenizer.get_indices(code)
-            
-            # Truncate to max_code_tokens (18) just in case
-            code_tokens = code_tokens[:self.max_code_tokens]
-            
-            # Insert into our padded matrix
-            padded_matrix[i, :len(code_tokens)] = torch.tensor(code_tokens, dtype=torch.long)
-            
         return {
             "input_ids": text_encoding["input_ids"].squeeze(0),
             "attention_mask": text_encoding["attention_mask"].squeeze(0),
-            "icd10_indices": padded_matrix, # [10, 18]
             "labels": text_encoding["input_ids"].squeeze(0).clone()
         }
 
 # ============================================================
-# MODEL WRAPPER (Updated)
+# MODEL WRAPPER (Simplified - No ICD-10 Embedding/Fusion!)
 # ============================================================
 
 class MedGemmaWithICD10(nn.Module):
-    def __init__(self, model_name, icd10_tokenizer_path, lora_config=None):
+    """
+    Simplified model - just MedGemma with LoRA, no separate ICD-10 modules!
+    The ICD-10 knowledge is embedded in the text tokenizer vocabulary.
+    """
+    def __init__(self, model_name, lora_config=None):
         super().__init__()
-        
-        self.icd10_tokenizer = ICD10Tokenizer(icd10_tokenizer_path)
         
         print(f"Loading {model_name} with Unsloth...")
         self.model, self.tokenizer = FastLanguageModel.from_pretrained(
@@ -199,70 +243,39 @@ class MedGemmaWithICD10(nn.Module):
         
         self.model = get_peft_model(self.model, lora_config)
         self.model.print_trainable_parameters()
-        
-        hidden_size = self.model.config.hidden_size  
-        
-        # Swap in the new Flattened Embedding
-        self.icd10_embedding = FlattenedICD10Embedding(
-            vocab_size=len(self.icd10_tokenizer),
-            hidden_size=hidden_size
-        )
-        
-        self.fusion = ICD10FusionModule(hidden_size=hidden_size)
-        
-        # Auxiliary prediction head
-        self.icd10_head = nn.Linear(hidden_size, len(self.icd10_tokenizer))
 
-    def forward(self, input_ids, attention_mask, icd10_indices, labels=None):
-        outputs = self.model.model(
+    def forward(self, input_ids, attention_mask, labels=None):
+        outputs = self.model(
             input_ids=input_ids,
             attention_mask=attention_mask,
-            output_hidden_states=True,
+            labels=labels,
             return_dict=True
         )
         
-        text_hidden = outputs.hidden_states[-1] 
-        icd10_embeds = self.icd10_embedding(icd10_indices) 
-        fused = self.fusion(text_hidden, icd10_embeds, attention_mask)
-        lm_logits = self.model.lm_head(text_hidden) 
-        
-        loss = None
-        if labels is not None:
-            # 1. Causal LM loss
-            shift_logits = lm_logits[..., :-1, :].contiguous()
-            shift_labels = labels[..., 1:].contiguous()
-            loss_fct = nn.CrossEntropyLoss(ignore_index=-100)
-            loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-            
-            # 2. Auxiliary ICD-10 Token Prediction Loss
-            icd10_logits = self.icd10_head(fused) 
-            icd10_labels = torch.zeros_like(icd10_logits)
-            
-            for b in range(icd10_indices.size(0)):
-                # Target unique sub-tokens present in this batch item
-                unique_indices = torch.unique(icd10_indices[b])
-                for idx in unique_indices:
-                    if idx > 0: # Ignore padding index 0
-                        icd10_labels[b, idx] = 1.0
-            
-            icd10_loss = F.binary_cross_entropy_with_logits(icd10_logits, icd10_labels)
-            loss = loss + 0.1 * icd10_loss 
-        
         return {
-            "loss": loss,
-            "lm_logits": lm_logits,
+            "loss": outputs.loss,
+            "lm_logits": outputs.logits,
         }
 
+    def generate(self, input_ids, attention_mask, **kwargs):
+        """Generate with the model."""
+        return self.model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            **kwargs
+        )
+
 # ============================================================
-# CUSTOM TRAINER
+# CUSTOM TRAINER (Simplified)
 # ============================================================
 
 class ICD10Trainer:
-    def __init__(self, model, train_dataset, eval_dataset, args):
+    def __init__(self, model, train_dataset, eval_dataset, args, special_token_manager=None):
         self.model = model
         self.train_dataset = train_dataset
         self.eval_dataset = eval_dataset
         self.args = args
+        self.special_token_manager = special_token_manager
 
         self.optimizer = torch.optim.AdamW(
             [p for p in model.parameters() if p.requires_grad],
@@ -296,14 +309,12 @@ class ICD10Trainer:
             for step, batch in enumerate(self.train_loader):
                 input_ids = batch["input_ids"].to(self.device)
                 attention_mask = batch["attention_mask"].to(self.device)
-                icd10_indices = batch["icd10_indices"].to(self.device)
                 labels = batch["labels"].to(self.device)
                 
                 with torch.amp.autocast('cuda'):
                     outputs = self.model(
                         input_ids=input_ids,
                         attention_mask=attention_mask,
-                        icd10_indices=icd10_indices,
                         labels=labels
                     )
                     loss = outputs["loss"] / self.args.gradient_accumulation
@@ -340,14 +351,12 @@ class ICD10Trainer:
             for batch in self.eval_loader:
                 input_ids = batch["input_ids"].to(self.device)
                 attention_mask = batch["attention_mask"].to(self.device)
-                icd10_indices = batch["icd10_indices"].to(self.device)
                 labels = batch["labels"].to(self.device)
                 
                 with torch.amp.autocast('cuda'):
                     outputs = self.model(
                         input_ids=input_ids,
                         attention_mask=attention_mask,
-                        icd10_indices=icd10_indices,
                         labels=labels
                     )
                     total_loss += outputs["loss"].item()
@@ -366,9 +375,13 @@ class ICD10Trainer:
         output_dir.mkdir(parents=True, exist_ok=True)
         
         self.model.model.save_pretrained(output_dir / "lora_adapters")
-        torch.save(self.model.icd10_embedding.state_dict(), output_dir / "icd10_embedding.pt")
-        torch.save(self.model.fusion.state_dict(), output_dir / "fusion.pt")
-        torch.save(self.model.icd10_head.state_dict(), output_dir / "icd10_head.pt")
+        self.model.tokenizer.save_pretrained(output_dir / "tokenizer")
+        
+        # Save special token manager for inference
+        if self.special_token_manager:
+            import pickle
+            with open(output_dir / "special_token_manager.pkl", "wb") as f:
+                pickle.dump(self.special_token_manager, f)
         
         print(f"Saved checkpoint to {output_dir}")
 
@@ -377,7 +390,7 @@ class ICD10Trainer:
 # ============================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="Train MedGemma with ICD-10 integration")
+    parser = argparse.ArgumentParser(description="Train MedGemma with ICD-10 special tokens (Option 2)")
     parser.add_argument('--data_path', type=str, 
                         default="/mnt/data/medgemma_project/dataset/annotated_medical_meadow.jsonl",
                         help="Path to annotated_medical_meadow.jsonl")
@@ -385,18 +398,20 @@ def main():
                         default="/mnt/data/medgemma_project/icd10_tokenizer")
     parser.add_argument('--model_name', type=str, default="unsloth/gemma-3-4b-it-bnb-4bit")
     parser.add_argument('--output_dir', type=str, 
-                        default="/mnt/data/medgemma_project/medgemma-icd10_checkpoints")
+                        default="/mnt/data/medgemma_project/medgemma-icd10_option2_checkpoints")
     parser.add_argument('--num_epochs', type=int, default=3)
     parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--gradient_accumulation', type=int, default=8)
     parser.add_argument('--learning_rate', type=float, default=2e-4)
     parser.add_argument('--weight_decay', type=float, default=0.01)
     parser.add_argument('--max_text_length', type=int, default=2048)
-    parser.add_argument('--max_codes', type=int, default=10)
-    parser.add_argument('--max_code_tokens', type=int, default=18)
+    parser.add_argument('--max_icd10_special_tokens', type=int, default=MAX_ICD10_SPECIAL_TOKENS,
+                        help="Max unique ICD-10 codes to add as special tokens")
+    parser.add_argument('--response_mode', type=str, default="icd10", choices=["icd10", "explanation"],
+                        help="Which part of assistant response to train on")
     args = parser.parse_args()
 
-    wandb.init(project="medgemma-icd10", config=vars(args))
+    wandb.init(project="medgemma-icd10-option2", config=vars(args))
 
     print(f"Loading data from {args.data_path}...")
     with open(args.data_path, "r", encoding="utf-8") as f:
@@ -408,37 +423,55 @@ def main():
     eval_data = all_data[split_idx:]
     print(f"Loaded {len(train_data)} training samples and {len(eval_data)} evaluation samples.")
 
-    # Load ICD-10 tokenizer
+    # Load ICD-10 tokenizer (for preprocessing/validation only)
     print("Loading ICD-10 tokenizer...")
     icd10_tokenizer = ICD10Tokenizer(args.icd10_artifacts_dir)
     print(f"  Loaded tokenizer with vocab size {len(icd10_tokenizer)}")
 
-    # Load text tokenizer (MedGemma tokenizer)
+    # Build special token vocabulary from training data
+    print("Building ICD-10 special token vocabulary...")
+    special_token_manager = ICD10SpecialTokenManager(icd10_tokenizer, max_tokens=args.max_icd10_special_tokens)
+    special_tokens = special_token_manager.build_vocabulary_from_data(train_data + eval_data)
+    
+    # Load text tokenizer and ADD special tokens
+    print("Loading text tokenizer and adding special tokens...")
     text_tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     if text_tokenizer.pad_token is None:
         text_tokenizer.pad_token = text_tokenizer.eos_token
+    
+    # Add special tokens to tokenizer
+    num_added = text_tokenizer.add_special_tokens({"additional_special_tokens": special_tokens})
+    print(f"Added {num_added} special tokens to text tokenizer")
+    print(f"New tokenizer vocab size: {len(text_tokenizer)}")
+    
+    # IMPORTANT: Resize model embeddings after adding tokens
+    # This will be done after model loading in MedGemmaWithICD10
 
-    # Datasets
+    # Datasets (with preprocessing)
     print("Preparing datasets...")
-    train_dataset = MedicalMeadowICD10Dataset(
-        train_data, icd10_tokenizer, text_tokenizer, 
-        max_text_length=args.max_text_length, max_codes=args.max_codes, max_code_tokens=args.max_code_tokens
+    train_dataset = SynthAIICD10Dataset(
+        train_data, special_token_manager, text_tokenizer, 
+        max_text_length=args.max_text_length, choose_response=args.response_mode
     )
 
-    eval_dataset = MedicalMeadowICD10Dataset(
-        eval_data, icd10_tokenizer, text_tokenizer, 
-        max_text_length=args.max_text_length, max_codes=args.max_codes, max_code_tokens=args.max_code_tokens
+    eval_dataset = SynthAIICD10Dataset(
+        eval_data, special_token_manager, text_tokenizer, 
+        max_text_length=args.max_text_length, choose_response=args.response_mode
     )
 
-    # Model
+    # Model (simplified!)
     print("Initializing model...")
     model = MedGemmaWithICD10(
         model_name=args.model_name,
-        icd10_tokenizer_path=args.icd10_artifacts_dir
     )
+    
+    # Resize embeddings to accommodate new special tokens
+    print(f"Resizing model embeddings from {model.model.config.vocab_size} to {len(text_tokenizer)}")
+    model.model.resize_token_embeddings(len(text_tokenizer))
+    model.tokenizer = text_tokenizer  # Update tokenizer reference
 
     # Trainer
-    trainer = ICD10Trainer(model, train_dataset, eval_dataset, args)
+    trainer = ICD10Trainer(model, train_dataset, eval_dataset, args, special_token_manager)
 
     # Train
     print("Starting training...")
@@ -448,9 +481,11 @@ def main():
     final_dir = Path(args.output_dir) / "final"
     final_dir.mkdir(parents=True, exist_ok=True)
     model.model.save_pretrained(final_dir / "lora_adapters")
-    torch.save(model.icd10_embedding.state_dict(), final_dir / "icd10_embedding.pt")
-    torch.save(model.fusion.state_dict(), final_dir / "fusion.pt")
-    torch.save(model.icd10_head.state_dict(), final_dir / "icd10_head.pt")
+    model.tokenizer.save_pretrained(final_dir / "tokenizer")
+    
+    import pickle
+    with open(final_dir / "special_token_manager.pkl", "wb") as f:
+        pickle.dump(special_token_manager, f)
 
     print(f"Training complete! Model saved to {final_dir}")
     wandb.finish()

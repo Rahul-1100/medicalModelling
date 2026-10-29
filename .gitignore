@@ -3,3 +3,13 @@ FiscaAI___synth-ehr-icd10cm-prompt/
 data/
 *.arrow
 *.jsonl
+
+# Regenerable artifacts (build outputs, not source)
+unified_icd10_gemma_tokenizer/
+icd10_tokenizer/
+
+# Caches / junk
+__pycache__/
+*.lock
+*.bak
+wandb/
