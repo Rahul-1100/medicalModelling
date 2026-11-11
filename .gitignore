@@ -13,3 +13,6 @@ __pycache__/
 *.lock
 *.bak
 wandb/
+slurm_out
+unsloth_compiled_cache
+dummy_test_save

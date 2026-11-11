@@ -1,0 +1,30 @@
+==========================================
+SLURM_JOB_ID = 125627
+SLURM_NODELIST = pascal-node12.l3s.intra
+==========================================
+Unsloth: torchao==0.18.0 does not support torch==2.6.0+cu124 (module 'torch' has no attribute 'float4_e2m1fn_x2'), so torchao is disabled for this process and everything that does not use it keeps working. QAT, torchao float8 and torchao-quantized checkpoints need a torchao that matches this torch:
+    pip install "torchao<0.14"
+or a newer torch.
+🦥 Unsloth: Will patch your computer to enable 2x faster free finetuning.
+Unsloth: xformers is installed but cannot load with torch 2.6.0+cu124 (it was built for 2.10.0+cu128), so PyTorch attention is used instead.
+To install a matching xformers, run `unsloth install-kernels xformers`, or `pip uninstall xformers` to hide this. UNSLOTH_ENABLE_LOGGING=1 shows the full error.
+🦥 Unsloth Zoo will now patch everything to make training faster!
+Synth dataset loaded from HF hub: FiscaAI/synth-ehr-icd10cm-prompt
+Synth dataset rows: 366120
+Loaded 329508 training samples and 36612 evaluation samples.
+Loading unified tokenizer from ./unified_icd10_gemma_tokenizer...
+Unified tokenizer vocab size: 264163
+ICD-10 hierarchy tokens in vocab: 1868
+Examples: ['SUBCAT_830', 'CAT_J44', 'CAT_L97', 'CAT_N14', 'CAT_R30', 'SUBCAT_590A', 'CAT_F15', 'SUBCAT_226A', 'BLOCK_', 'CAT_K91']
+Preparing datasets...
+Initializing model...
+Loading unsloth/gemma-3-4b-it-bnb-4bit with Unsloth...
+==((====))==  Unsloth 2026.10.11: Fast Gemma3 patching. Transformers: 5.17.0.
+   \\   /|    NVIDIA A100-PCIE-40GB. Num GPUs = 1. Max memory: 39.381 GB. Platform: Linux.
+O^O/ \_/ \    Torch: 2.6.0+cu124. CUDA: 8.0. CUDA Toolkit: 12.4. Triton: 3.2.0
+\        /    Bfloat16 = TRUE. FA [Xformers = None. FA2 = False]
+ "-____-"     Free license: http://github.com/unslothai/unsloth
+Unsloth: Fast downloading is enabled - ignore downloading bars which are red colored!
+[1;34mwandb[0m: 
+[1;34mwandb[0m: 🚀 View run [33mgood-thunder-1[0m at: [34mhttps://forge.coreweave.com/wandb/gu-rahu1100-luh/medgemma-unified-icd10/runs/ai476eig[0m
+[1;34mwandb[0m: Find logs at: [1;35mwandb/run-20261102_145400-ai476eig/logs[0m

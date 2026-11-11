@@ -1,0 +1,348 @@
+wandb: Loading settings from /home/rahul.gupta/medicalModelling/wandb/settings
+wandb: [wandb.login()] Loaded credentials for https://api.forge.coreweave.com from /home/rahul.gupta/.netrc.
+wandb: Currently logged in as: gu-rahu1100 (gu-rahu1100-luh) to https://api.forge.coreweave.com. Use `wandb login --relogin` to force relogin
+wandb: setting up run vu8kkf1c
+wandb: Tracking run with wandb version 0.31.0
+wandb: Run data is saved locally in /home/rahul.gupta/medicalModelling/wandb/run-20261104_085208-vu8kkf1c
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run efficient-snow-4
+wandb: ⭐️ View project at https://forge.coreweave.com/wandb/gu-rahu1100-luh/medgemma-unified-icd10
+wandb: 🚀 View run at https://forge.coreweave.com/wandb/gu-rahu1100-luh/medgemma-unified-icd10/runs/vu8kkf1c
+Loading weights:   0%|          | 0/883 [00:00<?, ?it/s]Loading weights:   0%|          | 1/883 [00:11<2:41:51, 11.01s/it]Loading weights:   0%|          | 2/883 [00:11<1:07:43,  4.61s/it]Loading weights:   0%|          | 3/883 [00:11<37:31,  2.56s/it]  Loading weights:   0%|          | 4/883 [00:11<23:22,  1.60s/it]Loading weights:   2%|▏         | 14/883 [00:11<03:44,  3.86it/s]Loading weights:   2%|▏         | 17/883 [00:11<03:01,  4.78it/s]Loading weights:   3%|▎         | 26/883 [00:11<01:29,  9.56it/s]Loading weights:   3%|▎         | 30/883 [00:12<01:27,  9.76it/s]Loading weights:   4%|▍         | 39/883 [00:12<00:52, 16.03it/s]Loading weights:   5%|▍         | 44/883 [00:12<00:55, 15.24it/s]Loading weights:   6%|▌         | 53/883 [00:13<00:40, 20.44it/s]Loading weights:   6%|▋         | 57/883 [00:13<00:42, 19.43it/s]Loading weights:   7%|▋         | 66/883 [00:13<00:33, 24.73it/s]Loading weights:   8%|▊         | 70/883 [00:13<00:38, 21.16it/s]Loading weights:   9%|▉         | 79/883 [00:13<00:29, 27.26it/s]Loading weights:   9%|▉         | 83/883 [00:14<00:33, 23.92it/s]Loading weights:  10%|█         | 92/883 [00:14<00:26, 29.62it/s]Loading weights:  11%|█         | 96/883 [00:14<00:30, 25.44it/s]Loading weights:  12%|█▏        | 105/883 [00:14<00:25, 30.72it/s]Loading weights:  12%|█▏        | 109/883 [00:15<00:29, 26.07it/s]Loading weights:  13%|█▎        | 118/883 [00:15<00:24, 31.27it/s]Loading weights:  14%|█▍        | 122/883 [00:15<00:29, 25.70it/s]Loading weights:  15%|█▍        | 130/883 [00:15<00:25, 29.70it/s]Loading weights:  15%|█▌        | 134/883 [00:16<00:29, 25.14it/s]Loading weights:  16%|█▋        | 144/883 [00:16<00:23, 31.39it/s]Loading weights:  17%|█▋        | 148/883 [00:16<00:27, 26.70it/s]Loading weights:  18%|█▊        | 157/883 [00:16<00:25, 27.94it/s]Loading weights:  18%|█▊        | 161/883 [00:16<00:25, 28.00it/s]Loading weights:  19%|█▉        | 170/883 [00:17<00:21, 33.07it/s]Loading weights:  20%|█▉        | 174/883 [00:17<00:26, 27.25it/s]Loading weights:  21%|██        | 183/883 [00:17<00:22, 30.97it/s]Loading weights:  21%|██        | 187/883 [00:17<00:26, 26.62it/s]Loading weights:  22%|██▏       | 195/883 [00:18<00:22, 30.85it/s]Loading weights:  23%|██▎       | 199/883 [00:18<00:25, 26.35it/s]Loading weights:  24%|██▎       | 209/883 [00:18<00:20, 33.05it/s]Loading weights:  24%|██▍       | 213/883 [00:18<00:25, 26.64it/s]Loading weights:  25%|██▌       | 222/883 [00:18<00:21, 31.30it/s]Loading weights:  26%|██▌       | 226/883 [00:19<00:24, 26.97it/s]Loading weights:  27%|██▋       | 235/883 [00:19<00:20, 31.15it/s]Loading weights:  27%|██▋       | 239/883 [00:19<00:23, 27.04it/s]Loading weights:  28%|██▊       | 248/883 [00:19<00:20, 31.23it/s]Loading weights:  29%|██▊       | 252/883 [00:20<00:23, 26.93it/s]Loading weights:  30%|██▉       | 261/883 [00:20<00:19, 31.26it/s]Loading weights:  30%|███       | 265/883 [00:20<00:22, 27.25it/s]Loading weights:  31%|███       | 273/883 [00:20<00:20, 30.33it/s]Loading weights:  31%|███▏      | 277/883 [00:20<00:22, 27.00it/s]Loading weights:  33%|███▎      | 287/883 [00:21<00:17, 33.51it/s]Loading weights:  33%|███▎      | 291/883 [00:21<00:21, 27.62it/s]Loading weights:  34%|███▍      | 300/883 [00:21<00:18, 32.17it/s]Loading weights:  34%|███▍      | 304/883 [00:21<00:21, 26.38it/s]Loading weights:  35%|███▌      | 313/883 [00:22<00:17, 31.81it/s]Loading weights:  36%|███▌      | 317/883 [00:22<00:21, 25.81it/s]Loading weights:  37%|███▋      | 325/883 [00:22<00:17, 31.53it/s]Loading weights:  37%|███▋      | 329/883 [00:22<00:21, 25.96it/s]Loading weights:  38%|███▊      | 339/883 [00:22<00:17, 31.99it/s]Loading weights:  39%|███▉      | 343/883 [00:23<00:20, 26.08it/s]Loading weights:  40%|███▉      | 352/883 [00:23<00:17, 31.16it/s]Loading weights:  40%|████      | 356/883 [00:23<00:19, 26.35it/s]Loading weights:  41%|████▏     | 365/883 [00:23<00:19, 26.83it/s]Loading weights:  42%|████▏     | 368/883 [00:24<00:19, 26.09it/s]Loading weights:  43%|████▎     | 378/883 [00:24<00:15, 32.97it/s]Loading weights:  43%|████▎     | 382/883 [00:24<00:17, 27.86it/s]Loading weights:  44%|████▍     | 390/883 [00:24<00:15, 31.52it/s]Loading weights:  45%|████▍     | 394/883 [00:24<00:18, 26.57it/s]Loading weights:  46%|████▌     | 404/883 [00:25<00:14, 33.44it/s]Loading weights:  46%|████▌     | 408/883 [00:25<00:17, 27.33it/s]Loading weights:  47%|████▋     | 416/883 [00:25<00:14, 31.65it/s]Loading weights:  48%|████▊     | 420/883 [00:25<00:17, 26.98it/s]Loading weights:  49%|████▊     | 430/883 [00:26<00:13, 33.69it/s]Loading weights:  49%|████▉     | 434/883 [00:26<00:15, 28.09it/s]Loading weights:  50%|█████     | 443/883 [00:26<00:13, 31.54it/s]Loading weights:  53%|█████▎    | 465/883 [00:26<00:07, 59.70it/s]Loading weights:  55%|█████▌    | 487/883 [00:26<00:04, 83.11it/s]Loading weights:  57%|█████▋    | 505/883 [00:26<00:03, 101.55it/s]Loading weights:  60%|█████▉    | 527/883 [00:26<00:02, 125.69it/s]Loading weights:  62%|██████▏   | 550/883 [00:27<00:02, 149.65it/s]Loading weights:  64%|██████▍   | 569/883 [00:27<00:02, 156.57it/s]Loading weights:  67%|██████▋   | 593/883 [00:27<00:01, 177.63it/s]Loading weights:  70%|██████▉   | 615/883 [00:27<00:01, 177.12it/s]Loading weights:  72%|███████▏  | 637/883 [00:27<00:01, 187.99it/s]Loading weights:  74%|███████▍  | 657/883 [00:27<00:01, 184.45it/s]Loading weights:  77%|███████▋  | 681/883 [00:27<00:01, 198.90it/s]Loading weights:  80%|███████▉  | 703/883 [00:27<00:00, 203.84it/s]Loading weights:  82%|████████▏ | 724/883 [00:27<00:00, 201.62it/s]Loading weights:  84%|████████▍ | 745/883 [00:28<00:00, 201.96it/s]Loading weights:  87%|████████▋ | 766/883 [00:28<00:00, 197.82it/s]Loading weights:  90%|████████▉ | 791/883 [00:28<00:00, 196.36it/s]Loading weights:  92%|█████████▏| 815/883 [00:28<00:00, 207.50it/s]Loading weights:  95%|█████████▍| 838/883 [00:28<00:00, 213.21it/s]Loading weights:  97%|█████████▋| 860/883 [00:28<00:00, 204.37it/s]Loading weights: 100%|██████████| 883/883 [00:28<00:00, 30.80it/s] 
+The new embeddings will be initialized from a multivariate normal distribution that has old embeddings' mean and covariance. As described in this article: https://nlp.stanford.edu/~johnhew/vocab-expansion.html. To disable this, use `mean_resizing=False`
+Unsloth: Moved embed_tokens, lm_head from `target_modules` to `modules_to_save`, so they are trained as full weight matrices.
+This uses more VRAM than LoRA. Please list them in `modules_to_save` directly.
+AUTOTUNE flex_attention(4x8x2048x256, 4x4x2048x256, 4x4x2048x256, 4x8x2048, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x2048)
+  triton_flex_attention_0 5.5409 ms 100.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=32, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_1 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=128, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_2 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=128, BLOCK_N=128, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_3 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=64, BLOCK_N=128, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_4 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=64, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+SingleProcess AUTOTUNE benchmarking takes 0.2597 seconds and 27.5873 seconds precompiling for 5 choices
+AUTOTUNE flex_attention(4x8x2048x256, 4x4x2048x256, 4x4x2048x256, 4x8x2048, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x2048)
+  triton_flex_attention_5 5.4026 ms 100.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=32, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_6 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=128, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_7 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=128, BLOCK_N=128, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_8 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=64, BLOCK_N=128, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_9 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=64, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+SingleProcess AUTOTUNE benchmarking takes 0.2529 seconds and 28.0049 seconds precompiling for 5 choices
+AUTOTUNE flex_attention(4x8x2048x256, 4x4x2048x256, 4x4x2048x256, 4x8x2048, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x2048)
+  triton_flex_attention_10 5.4938 ms 100.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=32, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_11 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=128, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_12 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=128, BLOCK_N=128, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_13 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=64, BLOCK_N=128, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_14 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=64, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+SingleProcess AUTOTUNE benchmarking takes 0.2763 seconds and 28.4817 seconds precompiling for 5 choices
+AUTOTUNE flex_attention_backward(4x8x2048x256, 4x4x2048x256, 4x4x2048x256, 4x8x2048, 4x8x2048, 4x8x2048x256, 4x8x2048x256, 4x4x2048x256, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x2048)
+  triton_flex_attention_backward_16 14.2858 ms 100.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=32, BLOCK_N1=32, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=1, num_warps=4
+  triton_flex_attention_backward_17 14.3053 ms 99.9% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=32, BLOCK_N1=32, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_backward_18 15.2023 ms 94.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=32, BLOCK_N1=32, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=4, num_warps=4
+  triton_flex_attention_backward_19 15.3344 ms 93.2% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=32, BLOCK_N1=32, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=5, num_warps=4
+  triton_flex_attention_backward_21 194.8836 ms 7.3% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_backward_15 232.3026 ms 6.1% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=64, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=2, num_warps=4
+  triton_flex_attention_backward_20 260.1093 ms 5.5% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=1, num_warps=4
+  triton_flex_attention_backward_28 269.9704 ms 5.3% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=64, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=1, num_warps=4
+  triton_flex_attention_backward_22 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=4, num_warps=4
+  triton_flex_attention_backward_23 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=5, num_warps=4
+SingleProcess AUTOTUNE benchmarking takes 9.2885 seconds and 254.6863 seconds precompiling for 21 choices
+AUTOTUNE flex_attention(4x8x2048x256, 4x4x2048x256, 4x4x2048x256, 4x8x2048, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x2048)
+  triton_flex_attention_36 5.4026 ms 100.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=32, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_37 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=128, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_38 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=128, BLOCK_N=128, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_39 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=64, BLOCK_N=128, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_40 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M=64, BLOCK_N=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+SingleProcess AUTOTUNE benchmarking takes 0.2462 seconds and 29.0562 seconds precompiling for 5 choices
+AUTOTUNE flex_attention_backward(4x8x2048x256, 4x4x2048x256, 4x4x2048x256, 4x8x2048, 4x8x2048, 4x8x2048x256, 4x8x2048x256, 4x4x2048x256, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x1x16, 4x1x16x16, 4x2048)
+  triton_flex_attention_backward_42 14.3124 ms 100.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=32, BLOCK_N1=32, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=1, num_warps=4
+  triton_flex_attention_backward_43 14.3411 ms 99.8% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=32, BLOCK_N1=32, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_backward_44 14.9023 ms 96.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=32, BLOCK_N1=32, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=4, num_warps=4
+  triton_flex_attention_backward_45 14.9914 ms 95.5% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=32, BLOCK_N1=32, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=5, num_warps=4
+  triton_flex_attention_backward_47 186.9783 ms 7.7% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=3, num_warps=4
+  triton_flex_attention_backward_41 224.0317 ms 6.4% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=64, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=2, num_warps=4
+  triton_flex_attention_backward_54 259.7089 ms 5.5% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=64, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=64, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=1, num_warps=4
+  triton_flex_attention_backward_46 263.2602 ms 5.4% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=1, num_warps=4
+  triton_flex_attention_backward_48 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=4, num_warps=4
+  triton_flex_attention_backward_49 inf ms 0.0% BLOCKS_ARE_CONTIGUOUS=False, BLOCK_M1=32, BLOCK_M2=64, BLOCK_N1=64, BLOCK_N2=32, FLOAT32_PRECISION="'ieee'", FORCE_USE_FLEX_ATTENTION=True, GQA_SHARED_HEADS=2, HAS_FULL_BLOCKS=True, IS_DIVISIBLE=False, OUTPUT_LOGSUMEXP=True, PRESCALE_QK=False, QK_HEAD_DIM=256, ROWS_GUARANTEED_SAFE=False, SM_SCALE=0.0625, SPARSE_KV_BLOCK_SIZE=128, SPARSE_Q_BLOCK_SIZE=128, V_HEAD_DIM=256, num_stages=5, num_warps=4
+SingleProcess AUTOTUNE benchmarking takes 9.1480 seconds and 253.8046 seconds precompiling for 21 choices
+Traceback (most recent call last):
+  File "/home/rahul.gupta/medicalModelling/train_unified_tokenizer.py", line 736, in <module>
+    main()
+    ~~~~^^
+  File "/home/rahul.gupta/medicalModelling/train_unified_tokenizer.py", line 724, in main
+    trainer.train()
+    ~~~~~~~~~~~~~^^
+  File "/home/rahul.gupta/medicalModelling/train_unified_tokenizer.py", line 387, in train
+    outputs = self.model(
+        input_ids=input_ids,
+        attention_mask=attention_mask,
+        labels=labels
+    )
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/train_unified_tokenizer.py", line 272, in forward
+    outputs = self.model(
+        input_ids=input_ids,
+    ...<2 lines>...
+        return_dict=True
+    )
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1845, in _call_impl
+    return inner()
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1793, in inner
+    result = forward_call(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/peft/peft_model.py", line 2120, in forward
+    return self.base_model(
+           ~~~~~~~~~~~~~~~^
+        input_ids=input_ids,
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/peft/tuners/tuners_utils.py", line 359, in forward
+    return self.model(*args, **kwargs)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1845, in _call_impl
+    return inner()
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1793, in inner
+    result = forward_call(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/unsloth_compiled_cache/unsloth_compiled_module_gemma3.py", line 1139, in forward
+    return Gemma3ForConditionalGeneration_forward(self, input_ids=input_ids, pixel_values=pixel_values, attention_mask=attention_mask, position_ids=position_ids, past_key_values=past_key_values, token_type_ids=token_type_ids, inputs_embeds=inputs_embeds, labels=labels, use_cache=use_cache, logits_to_keep=logits_to_keep, **lm_kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth_zoo/temporary_patches/utils.py", line 2121, in forward
+    return disabled(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/utils/generic.py", line 939, in wrapper
+    output = func(self, *args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/unsloth_compiled_cache/unsloth_compiled_module_gemma3.py", line 930, in Gemma3ForConditionalGeneration_forward
+    outputs = self.model(
+        input_ids=input_ids,
+    ...<9 lines>...
+        **lm_kwargs,
+    )
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1845, in _call_impl
+    return inner()
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1793, in inner
+    result = forward_call(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/utils/generic.py", line 939, in wrapper
+    output = func(self, *args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/models/gemma3/modeling_gemma3.py", line 909, in forward
+    outputs = self.language_model(
+        attention_mask=causal_mask_mapping,
+    ...<5 lines>...
+        **lm_kwargs,
+    )
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1845, in _call_impl
+    return inner()
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1793, in inner
+    result = forward_call(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/utils/generic.py", line 1068, in wrapper
+    output = func(self, *args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/utils/output_capturing.py", line 286, in wrapper
+    outputs = func(self, *args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/models/gemma3/modeling_gemma3.py", line 564, in forward
+    hidden_states = decoder_layer(
+        hidden_states,
+    ...<4 lines>...
+        **kwargs,
+    )
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth_zoo/temporary_patches/misc.py", line 2646, in __call__
+    return original(self, *args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/modeling_layers.py", line 109, in __call__
+    return super().__call__(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/models/gemma3/modeling_gemma3.py", line 412, in forward
+    hidden_states, _ = self.self_attn(
+                       ~~~~~~~~~~~~~~^
+        hidden_states=hidden_states,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth_zoo/temporary_patches/gemma.py", line 207, in forward_past_key_values
+    return forward_function(self, hidden_states, position_embeddings, attention_mask, past_key_values, kwargs.pop("cache_position", None), **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth_zoo/temporary_patches/gemma.py", line 1092, in forward_function
+    attn_output_fp32, attn_weights = attention_interface(
+                                     ~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<7 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth/models/_utils.py", line 1231, in unsloth_flex_attention_forward
+    return flex_attention_forward(module, query, key, value, *args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/integrations/flex_attention.py", line 320, in flex_attention_forward
+    flex_attention_output = compile_friendly_flex_attention(
+        query,
+    ...<11 lines>...
+        **get_flex_attention_lse_kwargs(return_lse),
+    )
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/transformers/integrations/flex_attention.py", line 124, in compile_friendly_flex_attention
+    return flex_attention_compiled(
+        query,
+    ...<2 lines>...
+        **kwargs,
+    )
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_dynamo/eval_frame.py", line 574, in _fn
+    return fn(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/attention/flex_attention.py", line 1353, in flex_attention
+    out, lse = torch.compile(
+               ~~~~~~~~~~~~~~
+        _flex_attention_hop_wrapper, backend=backend, fullgraph=True
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    )(
+    ~^
+        query,
+        ^^^^^^
+    ...<5 lines>...
+        kernel_options,
+        ^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_dynamo/eval_frame.py", line 574, in _fn
+    return fn(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/nn/attention/flex_attention.py", line 1340, in _flex_attention_hop_wrapper
+    def _flex_attention_hop_wrapper(*args, **kwargs):
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_dynamo/eval_frame.py", line 745, in _fn
+    return fn(*args, **kwargs)
+  File "<eval_with_key>.18471", line 19, in forward
+    flex_attention = torch.ops.higher_order.flex_attention(l_args_0_, l_args_1_, l_args_2_, score_mod_0, (2048, 2048, l_args_4_2_, l_args_4_3_, l_args_4_4_, l_args_4_5_, l_args_4_6_, l_args_4_7_, l_args_4_8_, l_args_4_9_, 128, 128, mask_fn_0), 0.0625, {'FORCE_USE_FLEX_ATTENTION': True, 'PRESCALE_QK': False, 'ROWS_GUARANTEED_SAFE': False, 'BLOCKS_ARE_CONTIGUOUS': False, 'OUTPUT_LOGSUMEXP': True}, (), (l_args_4_12_closure_3_cell_contents_closure_0_cell_contents_1_closure_1_cell_contents,));  l_args_0_ = l_args_1_ = l_args_2_ = score_mod_0 = l_args_4_2_ = l_args_4_3_ = l_args_4_4_ = l_args_4_5_ = l_args_4_6_ = l_args_4_7_ = l_args_4_8_ = l_args_4_9_ = mask_fn_0 = l_args_4_12_closure_3_cell_contents_closure_0_cell_contents_1_closure_1_cell_contents = None
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_higher_order_ops/flex_attention.py", line 90, in __call__
+    return super().__call__(
+           ~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<7 lines>...
+        mask_mod_other_buffers,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_ops.py", line 440, in __call__
+    return wrapper()
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_dynamo/eval_frame.py", line 745, in _fn
+    return fn(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_ops.py", line 436, in wrapper
+    return self.dispatch(
+           ~~~~~~~~~~~~~^
+        dispatch_key_set.highestPriorityTypeId(), *args, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_ops.py", line 302, in dispatch
+    return kernel(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_higher_order_ops/flex_attention.py", line 731, in flex_attention_autograd
+    out, logsumexp = FlexAttentionAutogradOp.apply(
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<8 lines>...
+        *score_mod_other_buffers,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/autograd/function.py", line 575, in apply
+    return super().apply(*args, **kwargs)  # type: ignore[misc]
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_higher_order_ops/flex_attention.py", line 597, in forward
+    out, logsumexp = flex_attention(
+                     ~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<7 lines>...
+        mask_mod_other_buffers,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_higher_order_ops/flex_attention.py", line 90, in __call__
+    return super().__call__(
+           ~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<7 lines>...
+        mask_mod_other_buffers,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_ops.py", line 440, in __call__
+    return wrapper()
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_dynamo/eval_frame.py", line 745, in _fn
+    return fn(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_ops.py", line 431, in wrapper
+    return torch.overrides.handle_torch_function(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self, flat_args, *args, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/overrides.py", line 1720, in handle_torch_function
+    result = mode.__torch_function__(public_api, types, args, kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_dynamo/_trace_wrapped_higher_order_op.py", line 142, in __torch_function__
+    return func(*args, **(kwargs or {}))
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_higher_order_ops/flex_attention.py", line 90, in __call__
+    return super().__call__(
+           ~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<7 lines>...
+        mask_mod_other_buffers,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_ops.py", line 440, in __call__
+    return wrapper()
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_dynamo/eval_frame.py", line 745, in _fn
+    return fn(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_ops.py", line 436, in wrapper
+    return self.dispatch(
+           ~~~~~~~~~~~~~^
+        dispatch_key_set.highestPriorityTypeId(), *args, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_ops.py", line 302, in dispatch
+    return kernel(*args, **kwargs)
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_higher_order_ops/flex_attention.py", line 264, in sdpa_dense
+    out, lse = math_attention(
+               ~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<7 lines>...
+        mask_mod_other_buffers,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/_higher_order_ops/flex_attention.py", line 247, in math_attention
+    post_mod_scores = torch._safe_softmax(post_mod_scores, dim=-1)
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 128.00 MiB. GPU 0 has a total capacity of 39.38 GiB of which 83.38 MiB is free. Including non-PyTorch memory, this process has 39.29 GiB memory in use. Of the allocated memory 32.22 GiB is allocated by PyTorch, and 288.95 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

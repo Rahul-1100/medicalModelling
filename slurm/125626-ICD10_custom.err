@@ -1,0 +1,39 @@
+/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/torch/cuda/__init__.py:228: UserWarning: CUDA initialization: The NVIDIA driver on your system is too old (found version 12040). Please update your GPU driver by downloading and installing a new version from the URL: http://www.nvidia.com/Download/index.aspx Alternatively, go to: https://pytorch.org to install a PyTorch version that has been compiled with your version of the CUDA driver. (Triggered internally at /__w/pytorch/pytorch/c10/cuda/CUDAFunctions.cpp:119.)
+  return torch._C._cuda_getDeviceCount() > 0
+W1102 14:43:14.640000 967874 .venv/lib/python3.13/site-packages/torch/utils/_pytree.py:630] <enum 'KernelPreference'> is an Enum subclass and is now natively supported by torch.compile as an opaque value type. Calling register_constant() on Enum subclasses is deprecated and will be an error in a future release.
+W1102 14:43:14.830000 967874 .venv/lib/python3.13/site-packages/torch/utils/_pytree.py:630] <enum 'ScaleCalculationMode'> is an Enum subclass and is now natively supported by torch.compile as an opaque value type. Calling register_constant() on Enum subclasses is deprecated and will be an error in a future release.
+/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth/_gpu_init.py:73: UserWarning: Unsloth: Hugging Face cache '/mnt/data/medgemma_project/hf_cache/hub' is not writable; redirecting downloads to '/tmp/huggingface_rahul.gupta'.
+  _redirect()
+/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth/__init__.py:1666: UserWarning: WARNING: Unsloth should be imported before [transformers, peft] to ensure all optimizations are applied. Your code may run slower or encounter memory issues without these optimizations.
+
+Please restructure your imports with 'import unsloth' at the top of your file.
+  from ._gpu_init import *
+Traceback (most recent call last):
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth/_gpu_init.py", line 231, in <module>
+    import unsloth_zoo
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth_zoo/__init__.py", line 427, in <module>
+    from .device_type import (
+    ...<6 lines>...
+    )
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth_zoo/device_type.py", line 600, in <module>
+    DEVICE_TYPE : str = get_device_type()
+                        ~~~~~~~~~~~~~~~^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth_zoo/device_type.py", line 577, in get_device_type
+    raise NotImplementedError("Unsloth cannot find any torch accelerator? You need a GPU.")
+NotImplementedError: Unsloth cannot find any torch accelerator? You need a GPU.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/rahul.gupta/medicalModelling/train_unified_tokenizer.py", line 37, in <module>
+    from unsloth import FastLanguageModel
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth/__init__.py", line 1666, in <module>
+    from ._gpu_init import *
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth/_gpu_init.py", line 241, in <module>
+    _reraise_device_type_error_with_gpu_hint(device_type_error)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/rahul.gupta/medicalModelling/.venv/lib/python3.13/site-packages/unsloth/_gpu_init.py", line 209, in _reraise_device_type_error_with_gpu_hint
+    raise NotImplementedError(
+    ...<4 lines>...
+    ) from exception
+NotImplementedError: Unsloth: nvidia-smi sees NVIDIA A100-PCIE-40GB but torch.cuda.is_available() is False (torch 2.14.1+cu130, CUDA_VISIBLE_DEVICES='0'). PyTorch likely does not match this machine; reinstall it for /home/rahul.gupta/medicalModelling/.venv/bin/python per https://github.com/unslothai/unsloth#-install
