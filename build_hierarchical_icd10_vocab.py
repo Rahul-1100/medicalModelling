@@ -4,7 +4,7 @@ build_hierarchical_icd10_vocab.py
 
 Build a compact ICD-10 vocabulary using hierarchical BPE.
 Strategy:
-1. Parse all ICD-10 codes into hierarchical components (chapter, block, category, subcategory)
+1. Parse all ICD-10 codes into hierarchical components (chapter, category, subcategory, extension)
    Code sources: FiscaAI/synth-ehr-icd10cm-prompt HF dataset (codes column),
    CSV/TXT registry files, or the union of both (--codes_source)
 2. Train BPE on these components to learn shared prefixes
@@ -31,58 +31,74 @@ from transformers import AutoTokenizer, PreTrainedTokenizerFast
 # ICD-10 HIERARCHICAL DECOMPOSITION
 # ============================================================
 
-ICD10_PATTERN = re.compile(r'^([A-Z])(\d{2})(\.?)(\d{1,4}[A-TV-Z]?)$')
+ICD10_PATTERN = re.compile(r'^(?=[A-Z](?:\d{2}|\d[A-TV-Z])\.?[A-TV-Z0-9]{0,4}$)([A-Z])(\d{2}|\d[A-TV-Z])(\.?((?:[A-TV-Z][0-9A-TV-Z]{0,3})|(?:\d{1,3}[A-TV-Z0-9]{1,3})|(?:\d{1,4}))?)?$') # WTF is even this Need to reduce it if possible but this matches every case! 
 
 def decompose_icd10_code(code: str) -> Dict[str, str]:
     """
     Decompose ICD-10 code into hierarchical components.
-    
+
+    Placeholder rule: ICD-10-CM reserves 'X' as a placeholder in positions 5/6,
+    used only to push a 7th character into position 7. Placeholders are replaced
+    with '_' so they are position information, not vocabulary content.
+
+    A subcode of exactly 4 chars always ends in the 7th character (extension);
+    subcodes of 1-3 chars carry no extension.
+
     Examples:
-        A00.0   → {'chapter': 'A', 'block': 'A00', 'category': 'A00', 'subcategory': '0'}
-        A01.01  → {'chapter': 'A', 'block': 'A00', 'category': 'A01', 'subcategory': '01'}
-        T80.40xA → {'chapter': 'T', 'block': 'T80', 'category': 'T80', 'subcategory': '40xA'}
-        Z23     → {'chapter': 'Z', 'block': 'Z23', 'category': 'Z23', 'subcategory': ''}
+        A00.0    → {'chapter': 'A', 'category': 'A00', 'subcategory': '0',   'extension': ''}
+        M48.54XA → {'chapter': 'M', 'category': 'M48', 'subcategory': '54_', 'extension': 'A'}
+        O32.1XX1 → {'chapter': 'O', 'category': 'O32', 'subcategory': '1__', 'extension': '1'}
+        T50.Z15A → {'chapter': 'T', 'category': 'T50', 'subcategory': 'Z15', 'extension': 'A'}
+        M1A.9XX0 → {'chapter': 'M', 'category': 'M1A', 'subcategory': '9__', 'extension': '0'}
+        D46.C    → {'chapter': 'D', 'category': 'D46', 'subcategory': 'C',   'extension': ''}
+        N08      → {'chapter': 'N', 'category': 'N08', 'subcategory': '',    'extension': ''}
     """
     code = str(code).strip().upper()
-    
-    # Handle codes without dots (category level only)
-    if '.' not in code:
-        if len(code) >= 3:
-            return {
-                'chapter': code[0],
-                'block': code[:3],
-                'category': code[:3],
-                'subcategory': ''
-            }
-        return {'chapter': code[0] if code else '', 'block': '', 'category': '', 'subcategory': ''}
-    
-    category_part, subcategory_part = code.split('.', 1)
-    
-    # Chapter: first letter (A-TV-Z)
-    chapter = category_part[0] if category_part else ''
-    
-    # Block: first 3 chars (e.g., A00, T80, Z23)
-    block = category_part[:3] if len(category_part) >= 3 else category_part
-    
-    # Category: same as block for ICD-10-CM
-    category = category_part
-    
-    return {
-        'chapter': chapter,
-        'block': block,
-        'category': category,
-        'subcategory': subcategory_part
-    }
+
+    m = ICD10_PATTERN.match(code)
+    if m:
+        chapter = m.group(1)
+        category = chapter + m.group(2)
+        subcode = m.group(4) or ''
+
+        if len(subcode) == 4:
+            subcategory = subcode[:-1].replace('X', '_')
+            extension = subcode[-1]
+        else:
+            subcategory = subcode.replace('X', '_')
+            extension = ''
+
+        return {
+            'chapter': chapter,
+            'category': category,
+            'subcategory': subcategory,
+            'extension': extension
+        }
+
+    # Regex failed (should not happen for codes passing filter_valid_codes):
+    # best-effort fallback so downstream code still gets a usable shape.
+    if len(code) >= 3:
+        return {'chapter': code[0], 'category': code[:3], 'subcategory': '', 'extension': ''}
+    return {'chapter': code[0] if code else '', 'category': '', 'subcategory': '', 'extension': ''}
 
 
 def code_to_hierarchical_tokens(code: str) -> List[str]:
     """
     Convert ICD-10 code to a sequence of hierarchical tokens for BPE training.
-    
+
+    Factorized scheme: the chapter letter is NOT repeated in the category token,
+    so `CAT_48` is shared across M48/D48/C48/K48/... and the model learns to
+    condition on the preceding CHAP_ token. This collapses ~2000 CAT_* tokens
+    into ~350 (digits 00-99 + digit+letter tails like CAT_1A for M1A) and makes
+    every possible code representable (zero-OOV at this level), at the cost of
+    CAT_ tokens being meaningful only in CHAP_ context.
+
     Uses special markers to preserve hierarchy boundaries:
-    A00.0  → ['CHAP_A', 'BLOCK_A00', 'CAT_A00', 'SUBCAT_0']
-    T80.40xA → ['CHAP_T', 'BLOCK_T80', 'CAT_T80', 'SUBCAT_40xA']
-    Z23    → ['CHAP_Z', 'BLOCK_Z23', 'CAT_Z23']
+    A00.0    → ['CHAP_A', 'CAT_00', 'SUBCAT_0']
+    M48.54XA → ['CHAP_M', 'CAT_48', 'SUBCAT_54_', 'EXT_A']
+    O32.1XX1 → ['CHAP_O', 'CAT_32', 'SUBCAT_1__', 'EXT_1']
+    T50.Z15A → ['CHAP_T', 'CAT_50', 'SUBCAT_Z15', 'EXT_A']
+    Z23      → ['CHAP_Z', 'CAT_23']
 
     NOTE: Markers use "PREFIX_level" format, NOT "<CHAP>A"-style. The tokenizers
     BpeTrainer treats '<' and '>' as special-token delimiters and forbids any
@@ -91,17 +107,56 @@ def code_to_hierarchical_tokens(code: str) -> List[str]:
     """
     parts = decompose_icd10_code(code)
     tokens = []
-    
+
     if parts['chapter']:
         tokens.append(f"CHAP_{parts['chapter']}")
-    if parts['block']:
-        tokens.append(f"BLOCK_{parts['block']}")
-    if parts['category']:
-        tokens.append(f"CAT_{parts['category']}")
+        if len(parts['category']) > 1:
+            tokens.append(f"CAT_{parts['category'][1:]}")
     if parts['subcategory']:
         tokens.append(f"SUBCAT_{parts['subcategory']}")
-    
+    if parts['extension']:
+        tokens.append(f"EXT_{parts['extension']}")
+
     return tokens
+
+
+# Loose scanner for mid-text matching. Candidates are validated with
+# ICD10_PATTERN before being rewritten, so junk like "H1N1" or codes glued
+# into words ("XA99B") stay as plain text.
+ICD10_CANDIDATE_PATTERN = re.compile(
+    r'(?<![A-Z0-9])[A-Z](?:\d{2}|\d[A-TV-Z])\.?[A-TV-Z0-9]{0,4}(?![A-TV-Z0-9])'
+)
+
+
+def rewrite_codes_in_text(text: str) -> str:
+    """
+    Replace every ICD-10 code in raw text with its factorized marker string, so
+    the unified tokenizer resolves each level to a single stable ID. Markers are
+    joined WITHOUT separators - Gemma's SentencePiece turns every space between
+    markers into a standalone '▁' token, so dropping the spaces saves ~1-3
+    tokens per code (added-token matching is literal, boundaries are unambiguous):
+
+        "diagnosed with M48.54XA and E11.9"
+        → "diagnosed with CHAP_MCAT_48SUBCAT_54_EXT_A and CHAP_ECAT_11SUBCAT_9"
+
+    Sentence punctuation is preserved: a dot FOLLOWING a code ("...with E11.9.")
+    stays untouched because the candidate ends at the last code character.
+    Candidates that fail validation (including bare-dot ones like "A09.") are
+    left as-is. Limitation: lowercase placeholder 'x' (e.g. "T80.40xA" written
+    in prose) is not scanned - normalize data to uppercase before rewriting.
+    """
+    s = str(text)
+    out = []
+    last = 0
+    for m in ICD10_CANDIDATE_PATTERN.finditer(s):
+        cand = m.group(0)
+        if cand.endswith('.') or not ICD10_PATTERN.match(cand):
+            continue
+        out.append(s[last:m.start()])
+        out.append("".join(code_to_hierarchical_tokens(cand)))
+        last = m.end()
+    out.append(s[last:])
+    return "".join(out)
 
 
 # ============================================================
@@ -127,7 +182,7 @@ def train_hierarchical_bpe(
         Trained tokenizers.Tokenizer object
     """
     if special_tokens is None:
-        # NOTE: Do NOT include CHAP/BLOCK/CAT/SUBCAT markers here. Also never use
+        # NOTE: Do NOT include CHAP/CAT/SUBCAT/EXT markers here. Also never use
         # '<'/'>' characters in marker names: the tokenizers BpeTrainer treats
         # '<' and '>' as special-token delimiters and forbids merges containing
         # them, so compounds like "<CHAP>A" can never be learned as one token.
@@ -139,7 +194,7 @@ def train_hierarchical_bpe(
     all_sequences = []
     for code in codes:
         tokens = code_to_hierarchical_tokens(code)
-        all_sequences.append(" ".join(tokens))
+        all_sequences.append("".join(tokens))
     
     # Show some examples
     print("\nExample decompositions:")
@@ -186,6 +241,7 @@ def train_hierarchical_bpe(
 
 def merge_with_gemma_tokenizer(
     icd10_tokenizer: Tokenizer,
+    codes: List[str] = None,
     gemma_model_name: str = "unsloth/gemma-3-4b-it-bnb-4bit",
     output_dir: str = "./unified_icd10_gemma_tokenizer"
 ) -> PreTrainedTokenizerFast:
@@ -210,9 +266,54 @@ def merge_with_gemma_tokenizer(
     # Get ICD-10 vocabulary
     icd10_vocab = set(icd10_tokenizer.get_vocab().keys())
     print(f"ICD-10 BPE vocab size: {len(icd10_vocab)}")
+
+    # IMPORTANT: only the enumerated LEVEL tokens are added to Gemma - never
+    # the raw BPE vocab. Trained on separator-free marker strings, BPE learns
+    # spanning merges ('CHAP_ACAT_0', '0SUBCAT_0'); if those were added as
+    # tokens, the added-token trie's longest-match rule would shadow the level
+    # tokens and destroy single-ID encoding.
+    LEVEL_TOKEN_PATTERN = re.compile(
+        r'^(?:CHAP_[A-TV-Z]|CAT_[0-9A-TV-Z]+|SUBCAT_[0-9A-TV-Z_]+|EXT_[0-9A-TV-Z])$'
+    )
+
+    # Factorized level tokens form a closed set: enumerate them all so no
+    # BPE frequency cut can ever drop one. CAT tails are shared across chapters
+    # (CHAP_M + CAT_48 = M48), so the whole set is tiny and gives zero-OOV at
+    # the chapter/category/extension levels by construction. SUBCAT_ stays
+    # frequency-driven (open-ended inventory).
+    import string
+    letters = [c for c in string.ascii_uppercase if c != "U"]
+    guaranteed = {f"CHAP_{c}" for c in letters}
+    guaranteed |= {f"CAT_{n:02d}" for n in range(100)}
+    guaranteed |= {f"CAT_{d}{l}" for d in string.digits for l in letters}
+    guaranteed |= {f"EXT_{c}" for c in string.digits + "".join(letters)}
+    missing_guaranteed = guaranteed - icd10_vocab
+    print(f"Guaranteed factorized tokens: {len(guaranteed)} "
+          f"(not learned by BPE: {len(missing_guaranteed)})")
+
+    # SUBCAT_ inventory is open-ended, so guarantee the OBSERVED ones instead:
+    # every subcat that appears in the training codes is added directly,
+    # bypassing BPE frequency cuts (singleton subcodes would otherwise fall
+    # back to meaningless subword pieces).
+    observed_subcats = set()
+    if codes:
+        for c in codes:
+            p = decompose_icd10_code(c)
+            if p['subcategory']:
+                observed_subcats.add(f"SUBCAT_{p['subcategory']}")
+        missing_subcats = observed_subcats - icd10_vocab
+        icd10_vocab |= observed_subcats
+        print(f"Observed SUBCAT tokens added: {len(missing_subcats)} "
+              f"(total distinct observed: {len(observed_subcats)})")
     
-    # Find new tokens to add
-    new_tokens = sorted([t for t in icd10_vocab if t not in gemma_vocab])
+    # Find new tokens to add: ONLY enumerated level tokens, never BPE merges
+    level_tokens = guaranteed | observed_subcats
+    orphan_bpe = {t for t in icd10_vocab
+                  if LEVEL_TOKEN_PATTERN.match(t) and t not in level_tokens}
+    if orphan_bpe:
+        print(f"[warn] {len(orphan_bpe)} BPE-learned level-shaped tokens ignored "
+              f"(not in enumerated sets): {sorted(orphan_bpe)[:5]} ...")
+    new_tokens = sorted(level_tokens - gemma_vocab)
     print(f"New tokens to add: {len(new_tokens)}")
     
     # Show some examples
@@ -257,6 +358,9 @@ def normalize_code(code: str) -> str:
     code = str(code).strip(" '\"").upper()
     if not code or code == 'NAN':
         return ''
+    # "A09." - a bare trailing dot is never valid ICD-10; the regex accepts it
+    # only because the dot is optional, so clean it here instead.
+    code = code.rstrip('.')
     if '.' in code:
         return code
     if len(code) >= 3:
@@ -267,6 +371,20 @@ def normalize_code(code: str) -> str:
         else:
             return category
     return code
+
+
+def strip_code_dots(text: str) -> str:
+    """
+    Remove the dot only inside ICD-10 codes, leaving other punctuation alone.
+
+    The dot's position is fully deterministic (always right after the 3-char
+    category), so the model learns it implicitly from CHAP_/CAT_ tokens and the
+    dot never needs to be a token of its own. "E11.9" -> "E119" and
+    "M4854XA"/"M48.54XA" become identical strings before tokenization.
+    Sentence-ending periods after a code ("...diagnosed with E11.9.") are kept,
+    since they follow a digit, not the category.
+    """
+    return re.sub(r'(?<=[A-Z](?:\d{2}|\d[A-TV-Z]))\.(?=[A-TV-Z0-9])', '', str(text))
 
 
 def filter_valid_codes(codes: Set[str]) -> List[str]:
@@ -427,6 +545,7 @@ def main():
     # Merge with Gemma
     unified_tokenizer = merge_with_gemma_tokenizer(
         icd10_tokenizer,
+        codes=codes,
         gemma_model_name=args.gemma_model,
         output_dir=args.output_dir
     )
@@ -436,24 +555,25 @@ def main():
     print("TESTING UNIFIED TOKENIZER")
     print("="*60)
     
-    test_codes = ["A00.0", "A00.1", "A01.01", "T80.40xA", "Z23", "I10", "E11.9"]
+    test_codes = ["A00.0", "A00.1", "A01.01", "T80.40xA", "Z23", "I10", "E11.9",
+                  "M48.54XA", "O32.1XX1", "T50.Z15A", "M1A.9XX0", "D46.C", "N08"]
     test_text = "Patient diagnosed with A00.0 and I10, also has E11.9"
-    
-    print(f"\nTest text: {test_text}")
-    encoding = unified_tokenizer(test_text, return_tensors="pt")
+
+    print(f"\nTest text (codes rewritten to hierarchy tokens): {rewrite_codes_in_text(test_text)}")
+    encoding = unified_tokenizer(rewrite_codes_in_text(test_text), return_tensors="pt")
     tokens = unified_tokenizer.convert_ids_to_tokens(encoding["input_ids"][0])
     print(f"Tokens: {tokens}")
     print(f"Token IDs: {encoding['input_ids'][0].tolist()}")
-    
+
     print("\nIndividual code tokenization:")
     for code in test_codes:
-        tokens = unified_tokenizer.tokenize(code)
+        tokens = unified_tokenizer.tokenize("".join(code_to_hierarchical_tokens(code)))
         ids = unified_tokenizer.convert_tokens_to_ids(tokens)
         print(f"  {code:12s} → {tokens} (IDs: {ids})")
     
     # Verify special tokens work
     print("\nSpecial ICD tokens in vocab:")
-    for tok in ["CHAP_A", "BLOCK_A00", "CAT_A00", "SUBCAT_0", "<ICD_START>", "<ICD_END>"]:
+    for tok in ["CHAP_A", "CAT_00", "SUBCAT_0", "<ICD_START>", "<ICD_END>"]:
         if tok in unified_tokenizer.get_vocab():
             print(f"  {tok}: ID={unified_tokenizer.convert_tokens_to_ids(tok)}")
         else:

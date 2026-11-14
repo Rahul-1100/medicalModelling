@@ -6,6 +6,7 @@ data/
 
 # Regenerable artifacts (build outputs, not source)
 unified_icd10_gemma_tokenizer/
+unified_icd10_gemma_tokenizer_old/
 icd10_tokenizer/
 
 # Caches / junk

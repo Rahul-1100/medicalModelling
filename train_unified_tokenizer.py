@@ -6,7 +6,9 @@ Train MedGemma-3-4B with Unified Hierarchical ICD-10 Tokenizer (Option 1 + BPE)
 ================================================================================
 
 This approach:
-1. Builds hierarchical BPE vocabulary from ICD-10 codes (A00.0 → <CHAP>A <BLOCK>A00 <CAT>A00 <SUBCAT>0)
+1. Builds hierarchical BPE vocabulary from ICD-10 codes (A00.0 → <CHAP>A <CAT>00 <SUBCAT>0,
+   M48.54XA → <CHAP>M <CAT>48 <SUBCAT>54_ <EXT>A - '_' marks a reserved placeholder,
+   CAT_ is chapter-relative: CHAP_M + CAT_48 = M48)
 2. Merges with Gemma tokenizer (adds ~5-8k new tokens)
 3. Single modality, single tokenizer, single embedding layer
 4. ICD-10 codes in text are naturally tokenized as compositional hierarchy tokens
@@ -14,7 +16,7 @@ This approach:
 
 Benefits:
 - Compact vocabulary (vs 28k code-to-index or 50k special tokens)
-- Compositional: A00.0, A00.1, A00.9 share <CHAP>A <BLOCK>A00 <CAT>A00
+- Compositional: A00.0, A00.1, A00.9 share <CHAP>A <CAT>A00
 - Generalizes to unseen codes via shared prefixes
 - No separate modality / fusion needed
 """
@@ -29,11 +31,13 @@ from unsloth import FastLanguageModel
 
 import json
 import random
+import signal
 import argparse
 import time
 from pathlib import Path
 from typing import List, Dict, Optional
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -42,6 +46,21 @@ from transformers import AutoTokenizer
 from peft import LoraConfig, get_peft_model, TaskType, PeftModel
 import wandb
 
+# Single source of truth for code decomposition (chapter/category/subcategory/
+# extension, with 'X' placeholders mapped to '_') and for rewriting raw codes
+# in text into hierarchy-token strings.
+from build_hierarchical_icd10_vocab import decompose_icd10_code, rewrite_codes_in_text
+
+
+def set_seed(seed: int):
+    """Seed every RNG the pipeline touches so the train/eval split and the
+    per-epoch shuffle order are identical across resumed runs."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
 
 # ============================================================
 # DATASET (Standard Causal LM with Unified Tokenizer)
@@ -49,9 +68,11 @@ import wandb
 class UnifiedICD10Dataset(Dataset):
     """
     Causal LM dataset. In "icd10_custom" mode, ICD-10 codes in the assistant response are
-    rewritten as hierarchical token strings (CHAP_A BLOCK_A00 CAT_A00 SUBCAT_0). These
-    strings are then encoded by the UNIFIED tokenizer (Gemma vocab + merged ICD hierarchy
-    tokens), which resolves every CHAP_/BLOCK_/CAT_/SUBCAT_/NUM token to a single stable ID.
+    rewritten as factorized hierarchical token strings (CHAP_ACAT_00SUBCAT_0EXT_A).
+    These strings are then encoded by the UNIFIED tokenizer (Gemma vocab + merged ICD
+    hierarchy tokens), which resolves every CHAP_/CAT_/SUBCAT_/EXT_ token to a single
+    stable ID. CAT_ tokens are chapter-relative (CAT_48 + CHAP_M = M48): the model
+    learns which chapter the following CAT belongs to.
 
     No standalone ICD-10 tokenizer is needed at runtime: the hierarchy tokens already live
     in the unified vocab, and the hierarchical string is constructed with plain string ops.
@@ -89,9 +110,9 @@ class UnifiedICD10Dataset(Dataset):
         # single stable IDs (it is the output of build_hierarchical_icd10_vocab.py).
         vocab = tokenizer.get_vocab() if tokenizer is not None else {}
         self._chap_tokens = {t for t in vocab if t.startswith("CHAP_")}
-        self._block_tokens = {t for t in vocab if t.startswith("BLOCK_")}
         self._cat_tokens = {t for t in vocab if t.startswith("CAT_")}
         self._subcat_tokens = {t for t in vocab if t.startswith("SUBCAT_")}
+        self._ext_tokens = {t for t in vocab if t.startswith("EXT_")}
 
     def __len__(self):
         return len(self.dataset)
@@ -99,7 +120,10 @@ class UnifiedICD10Dataset(Dataset):
     def __getitem__(self, idx):
         item = self.dataset[idx]
         system_prompt = item.get("system", "")
-        user_prompt = item.get("user", "")
+        # Rewrite any ICD-10 codes inside the user prompt into hierarchy-token
+        # strings so both sides of the conversation speak the same language as
+        # the icd10_custom assistant target.
+        user_prompt = rewrite_codes_in_text(item.get("user", ""))
         assistant_full = item.get("assistant", "")
         codes = item.get("codes", [])
         codes_str = ", ".join(codes)
@@ -173,48 +197,51 @@ class UnifiedICD10Dataset(Dataset):
         return labels
 
     def _code_to_hierarchical(self, code: str) -> str:
-        """A02.0 → 'CHAP_A BLOCK_A02 CAT_A02 SUBCAT_0'. Components are validated against
-        the unified tokenizer's vocab (single-ID guarantee). Codes with missing level
-        tokens (not covered by the tokenizer's training set) are still constructed, but
-        Gemma's BPE will sub-decompose those pieces — warn once per code."""
+        """A02.0 → 'CHAP_ACAT_02SUBCAT_0'; M48.54XA → 'CHAP_MCAT_48SUBCAT_54_EXT_A'.
+        Factorized: the chapter letter is NOT repeated in the CAT_ token; the
+        model conditions each CAT_ on the preceding CHAP_. Decomposition is
+        delegated to decompose_icd10_code (single source of truth, shared with
+        build_hierarchical_icd10_vocab.py), so placeholder 'X's arrive already
+        mapped to '_'. Codes whose level tokens are not in the unified vocab
+        are still constructed, but Gemma's BPE will sub-decompose those
+        pieces — warn once per missing token."""
         code = str(code).strip().upper()
         if not code:
             return ""
         cached = self._hier_lookup.get(code)
         if cached is not None:
             return cached
-        if '.' in code:
-            cat, sub = code.split('.', 1)
-        else:
-            cat, sub = code, ''
-        result = " ".join(self._code_to_level_tokens(cat, sub))
-        self._hier_lookup[code] = result
-        return result
 
-    def _code_to_level_tokens(self, cat: str, sub: str) -> List[str]:
-        tokens = [
-            f"CHAP_{cat[0] if cat else ''}",
-            f"BLOCK_{cat[:3]}",
-            f"CAT_{cat}",
-        ]
-        if sub:
-            tokens.append(f"SUBCAT_{sub}")
+        parts = decompose_icd10_code(code)
+        tokens = []
+        if parts['chapter']:
+            tokens.append(f"CHAP_{parts['chapter']}")
+        if len(parts['category']) > 1:
+            tokens.append(f"CAT_{parts['category'][1:]}")
+        if parts['subcategory']:
+            tokens.append(f"SUBCAT_{parts['subcategory']}")
+        if parts['extension']:
+            tokens.append(f"EXT_{parts['extension']}")
+
         # Validate against vocab-derived token sets (O(1) membership)
-        for level_tokens, tok in ((self._chap_tokens, tokens[0]), (self._block_tokens, tokens[1]),
-                                  (self._cat_tokens, tokens[2])):
-            if level_tokens and tok not in level_tokens:
-                if tok not in self._missing_warned:
-                    self._missing_warned.add(tok)
-                    print(f"[hierarchy] '{tok}' not in unified vocab - "
-                          f"codes using it will fall back to sub-token pieces. "
-                          f"Rebuild with --codes_source union for full coverage.")
-        if sub and self._subcat_tokens and f"SUBCAT_{sub}" not in self._subcat_tokens:
-            if f"SUBCAT_{sub}" not in self._missing_warned:
-                self._missing_warned.add(f"SUBCAT_{sub}")
-                print(f"[hierarchy] 'SUBCAT_{sub}' not in unified vocab - "
+        checks = [
+            (self._chap_tokens, f"CHAP_{parts['chapter']}"),
+            (self._cat_tokens, f"CAT_{parts['category'][1:]}"),
+        ]
+        if parts['subcategory']:
+            checks.append((self._subcat_tokens, f"SUBCAT_{parts['subcategory']}"))
+        if parts['extension']:
+            checks.append((self._ext_tokens, f"EXT_{parts['extension']}"))
+        for tok_set, tok in checks:
+            if tok_set and tok not in tok_set and tok not in self._missing_warned:
+                self._missing_warned.add(tok)
+                print(f"[hierarchy] '{tok}' not in unified vocab - "
                       f"codes using it will fall back to sub-token pieces. "
                       f"Rebuild with --codes_source union for full coverage.")
-        return tokens
+
+        result = "".join(tokens)
+        self._hier_lookup[code] = result
+        return result
 
 
 # ============================================================
@@ -326,6 +353,17 @@ class UnifiedTrainer:
         self.amp_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
         self.scaler = torch.amp.GradScaler('cuda', enabled=(self.amp_dtype == torch.float16))
 
+        # Set by the signal handler / runtime-limit check in train().
+        self.stop_requested = False
+        self.stopped_early = False
+
+    def _signal_handler(self, signum, frame):
+        """Slurm sends SIGTERM at --time (or SIGUSR1 when the submit script sets
+        #SBATCH --signal=B:USR1@<secs>). Don't abort mid-step: just note it, and
+        the training loop checkpoints after the current step and exits."""
+        print(f"\n[Signal] Received signal {signum} - will checkpoint and exit after the current step...")
+        self.stop_requested = True
+
     @staticmethod
     def _format_time(seconds: float) -> str:
         seconds = max(0, int(seconds))
@@ -337,11 +375,17 @@ class UnifiedTrainer:
         test = True
         train_start_time = time.time()
         self.model.train()
+        self.stopped_early = False
 
         steps_per_epoch = len(self.train_loader)
         total_steps = self.args.num_epochs * steps_per_epoch
+        max_seconds = self.args.max_runtime_minutes * 60 if self.args.max_runtime_minutes > 0 else None
 
-        # Resume optimizer, scheduler, scaler, and step counters if --resume_from_checkpoint is set
+        for sig in (signal.SIGTERM, signal.SIGUSR1, signal.SIGINT):
+            signal.signal(sig, self._signal_handler)
+
+        # Resume optimizer, scheduler, scaler, RNG, and step counters if
+        # --resume_from_checkpoint is set.
         start_epoch = 0
         resume_step = 0
         if getattr(self.args, "resume_from_checkpoint", None):
@@ -349,22 +393,57 @@ class UnifiedTrainer:
             state_file = ckpt_path / "trainer_state.pt"
             if state_file.exists():
                 print(f"Resuming optimizer/scheduler state from {state_file}...")
-                state = torch.load(state_file, map_location=self.device)
+                state = torch.load(state_file, map_location="cpu")
                 self.optimizer.load_state_dict(state["optimizer"])
                 self.scheduler.load_state_dict(state["scheduler"])
                 self.scaler.load_state_dict(state["scaler"])
+                # Checkpoints store (epoch, step) as the NEXT step to run.
                 start_epoch = state.get("epoch", 0)
-                resume_step = (state.get("step") or 0) + 1
+                resume_step = state.get("step") or 0
+                if "rng" not in state:
+                    # Backwards compat with old-format checkpoints, which stored
+                    # the last completed step instead of the next one.
+                    resume_step = resume_step + 1
                 if resume_step >= steps_per_epoch:
                     start_epoch += 1
                     resume_step = 0
+                rng = state.get("rng")
+                if rng:
+                    torch.set_rng_state(rng["torch"].cpu())
+                    random.setstate(rng["python"])
+                    np.random.set_state(rng["numpy"])
+                    if rng.get("cuda") is not None and torch.cuda.is_available():
+                        torch.cuda.set_rng_state_all([t.cpu() for t in rng["cuda"]])
                 print(f"Resuming from Epoch {start_epoch + 1}, Step {resume_step}/{steps_per_epoch}")
 
+        executed_steps = 0
+        stop = False
         for epoch in range(start_epoch, self.args.num_epochs):
-            total_loss = 0
+            # Deterministic per-epoch shuffle: epoch N always yields the same
+            # order (seed + epoch), so a resumed run replays exactly the
+            # remaining steps of a partially-completed epoch.
+            epoch_loader = torch.utils.data.DataLoader(
+                self.train_dataset, batch_size=self.args.batch_size, shuffle=True,
+                num_workers=4, pin_memory=True,
+                generator=torch.Generator().manual_seed(self.args.seed + epoch),
+            )
+
+            total_loss = 0.0
+            executed_in_epoch = 0
             epoch_start_time = time.time()
 
-            for step, batch in enumerate(self.train_loader):
+            for step, batch in enumerate(epoch_loader):
+                # Interruption check BEFORE each step (slurm time limit / signal)
+                elapsed_total = time.time() - train_start_time
+                if self.stop_requested or (max_seconds is not None and elapsed_total >= max_seconds):
+                    reason = "signal received" if self.stop_requested else "runtime limit reached"
+                    next_step = step if epoch != start_epoch else max(step, resume_step)
+                    print(f"\n[Stop] {reason} - saving checkpoint at epoch {epoch + 1}, next step {next_step}...")
+                    self.save_checkpoint(epoch, next_step, epoch * steps_per_epoch + next_step)
+                    self.stopped_early = True
+                    stop = True
+                    break
+
                 # Skip already-completed steps when resuming mid-epoch
                 if epoch == start_epoch and step < resume_step:
                     continue
@@ -403,20 +482,20 @@ class UnifiedTrainer:
 
                 step_loss = loss.item() * self.args.gradient_accumulation
                 total_loss += step_loss
+                executed_steps += 1
+                executed_in_epoch += 1
                 global_step = epoch * steps_per_epoch + step + 1
 
                 if step % 10 == 0 or (step + 1) == steps_per_epoch:
                     now = time.time()
                     epoch_done_pct = ((step + 1) / steps_per_epoch) * 100
                     epoch_elapsed = now - epoch_start_time
-                    steps_in_this_epoch = max(1, (step + 1 - (resume_step if epoch == start_epoch else 0)))
-                    avg_step_time_epoch = epoch_elapsed / steps_in_this_epoch
+                    avg_step_time_epoch = epoch_elapsed / max(1, executed_in_epoch)
                     est_single_epoch_time = avg_step_time_epoch * steps_per_epoch
                     epoch_eta = avg_step_time_epoch * (steps_per_epoch - (step + 1))
 
                     total_elapsed = now - train_start_time
-                    steps_done_this_run = max(1, global_step - (start_epoch * steps_per_epoch + resume_step))
-                    avg_step_time_total = total_elapsed / steps_done_this_run
+                    avg_step_time_total = total_elapsed / max(1, executed_steps)
                     total_eta = avg_step_time_total * (total_steps - global_step)
 
                     print(
@@ -437,13 +516,15 @@ class UnifiedTrainer:
                             "train/total_eta_minutes": total_eta / 60,
                         })
 
-                # Save checkpoint every N steps (default: 30,000)
+                # Save checkpoint every N steps (state = next step to run)
                 if self.args.save_steps > 0 and global_step % self.args.save_steps == 0:
-                    self.save_checkpoint(epoch, step=step, global_step=global_step)
+                    self.save_checkpoint(epoch, step + 1, global_step)
+
+            if stop:
+                break
 
             epoch_train_time = time.time() - epoch_start_time
-            active_epoch_steps = max(1, (steps_per_epoch - (resume_step if epoch == start_epoch else 0)))
-            avg_loss = total_loss / active_epoch_steps
+            avg_loss = total_loss / max(1, executed_in_epoch)
             print(
                 f"\n---> Epoch {epoch + 1} finished in {self._format_time(epoch_train_time)} "
                 f"({epoch_train_time:.1f}s) | Average Loss: {avg_loss:.4f}\n"
@@ -452,7 +533,8 @@ class UnifiedTrainer:
                 wandb.log({"train/epoch_train_time_sec": epoch_train_time, "epoch": epoch + 1})
 
             self.evaluate(epoch)
-            self.save_checkpoint(epoch)
+            # Epoch completed: a resumed run starts at the FOLLOWING epoch, step 0.
+            self.save_checkpoint(epoch + 1, 0)
 
     def evaluate(self, epoch):
         self.model.eval()
@@ -522,6 +604,7 @@ class UnifiedTrainer:
         }
 
     def _generate_codes(self, user_prompt: str, max_new_tokens: int):
+        user_prompt = rewrite_codes_in_text(user_prompt)
         prompt = f"### Question:\n{user_prompt}\n\n### Answer:\n"
         inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=2048)
         device = next(self.model.parameters()).device
@@ -539,29 +622,49 @@ class UnifiedTrainer:
         generated_ids = outputs[0][input_ids.shape[1]:]
         tokens = self.tokenizer.convert_ids_to_tokens(generated_ids)
 
-        codes, cur, cat, sub = [], [], "", ""
+        codes = []
+        chap, cat, sub, ext = "", "", "", ""
         for t in tokens:
             t = str(t).lstrip("▁ ")
-            if not any(t.startswith(p) for p in ("CHAP_", "BLOCK_", "CAT_", "SUBCAT_")):
+            if not t.startswith(("CHAP_", "CAT_", "SUBCAT_", "EXT_")):
                 continue
-            if t.startswith("CHAP_") and cur:
+            if t.startswith("CHAP_"):
                 if cat:
-                    codes.append(f"{cat}.{sub}" if sub else cat)
-                cur, cat, sub = [], "", ""
-            cur.append(t)
-            if t.startswith("CAT_"):
+                    # New code begins: flush the completed one
+                    codes.append(self._reassemble_code(chap, cat, sub, ext))
+                chap, cat, sub, ext = t[5:], "", "", ""
+            elif t.startswith("CAT_"):
                 cat = t[4:]
             elif t.startswith("SUBCAT_"):
                 sub = t[7:]
-        if cur and cat:
-            codes.append(f"{cat}.{sub}" if sub else cat)
+            elif t.startswith("EXT_"):
+                ext = t[4:]
+        if cat:
+            codes.append(self._reassemble_code(chap, cat, sub, ext))
         return codes
 
-    def save_checkpoint(self, epoch, step=None, global_step=None):
+    @staticmethod
+    def _reassemble_code(chap: str, cat: str, sub: str, ext: str) -> str:
+        """CHAP 'M' + CAT '48' + SUB '54_' + EXT 'A' → 'M48.54XA'.
+        CAT_ is chapter-relative, so the CHAP_ letter must be carried along."""
+        code = (chap + cat) if chap else cat
+        if sub:
+            code += "." + sub.replace("_", "X")
+        return code + ext if ext else code
+
+    def save_checkpoint(self, next_epoch, next_step, global_step=None):
+        """Persist everything needed to resume exactly at (next_epoch, next_step).
+
+        (next_epoch, next_step) is the NEXT step to run, never the last
+        completed one:
+          - mid-epoch periodic save: (epoch, step_completed + 1)
+          - interruption save (signal / runtime limit): (epoch, pending_step)
+          - epoch-end save: (epoch + 1, 0)
+        """
         if global_step is not None:
             folder_name = f"checkpoint-step-{global_step}"
         else:
-            folder_name = f"checkpoint-epoch-{epoch + 1}"
+            folder_name = f"checkpoint-epoch-{next_epoch}"
 
         output_dir = Path(self.args.output_dir) / folder_name
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -570,18 +673,25 @@ class UnifiedTrainer:
         self.model.model.save_pretrained(output_dir / "lora_adapters", save_embedding_layers=True)
         self.model.tokenizer.save_pretrained(output_dir / "tokenizer")
 
-        # 2. Save trainer state so you can resume after the 2-day limit
+        # 2. Save trainer state + RNG so a slurm time-limit kill resumes cleanly
         state = {
-            "epoch": epoch,
-            "step": step,
+            "epoch": next_epoch,
+            "step": next_step,
             "global_step": global_step,
             "optimizer": self.optimizer.state_dict(),
             "scheduler": self.scheduler.state_dict(),
             "scaler": self.scaler.state_dict(),
+            "rng": {
+                "torch": torch.get_rng_state(),
+                "python": random.getstate(),
+                "numpy": np.random.get_state(),
+                "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+            },
         }
         torch.save(state, output_dir / "trainer_state.pt")
 
-        print(f"\n[Checkpoint] Saved model & trainer state to {output_dir}\n")
+        print(f"\n[Checkpoint] Saved model & trainer state to {output_dir} "
+              f"(resume at epoch {next_epoch + 1}, step {next_step})\n")
 
 
 # ============================================================
@@ -589,6 +699,7 @@ class UnifiedTrainer:
 # ============================================================
 def generate_icd10_codes(model, tokenizer, user_prompt: str, system_prompt: str = "",
                          max_new_tokens: int = 512, temperature: float = 0.7):
+    user_prompt = rewrite_codes_in_text(user_prompt)
     conversation = f"### Question:\n{user_prompt}\n\n### Answer:\n"
     inputs = tokenizer(
         conversation,
@@ -638,6 +749,11 @@ def main():
     parser.add_argument('--max_text_length', type=int, default=2048)
     parser.add_argument('--save_steps', type=int, default=30000,
                         help="Save a checkpoint every N training steps (default: 30000)")
+    parser.add_argument('--seed', type=int, default=42,
+                        help="Seed for split, shuffle and all RNGs (default: 42)")
+    parser.add_argument('--max_runtime_minutes', type=float, default=0,
+                        help="If > 0, save a checkpoint and stop after this many minutes "
+                             "(safety net for slurm time limits without --signal)")
     parser.add_argument('--resume_from_checkpoint', type=str, default=None,
                         help="Path to a checkpoint folder (e.g., ./checkpoints_unified/checkpoint-step-30000) to resume")
     parser.add_argument('--response_mode', type=str, default="icd10_custom",
@@ -676,8 +792,8 @@ def main():
         with open(args.data_path, "r", encoding="utf-8") as f:
             all_data = [json.loads(line) for line in f]
 
-    # Fix seed so train/eval split is identical if resuming after 2-day limit
-    random.seed(42)
+    # Fix seed so train/eval split is identical if resuming after a slurm limit
+    set_seed(args.seed)
     random.shuffle(all_data)
     split_idx = int(len(all_data) * 0.9)
     train_data = all_data[:split_idx]
@@ -689,7 +805,7 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     print(f"Unified tokenizer vocab size: {len(tokenizer)}")
-    icd_tokens = [t for t in tokenizer.get_vocab().keys() if t.startswith(('CHAP_', 'BLOCK_', 'CAT_', 'SUBCAT_', '<ICD_'))]
+    icd_tokens = [t for t in tokenizer.get_vocab().keys() if t.startswith(('CHAP_', 'CAT_', 'SUBCAT_', 'EXT_', '<ICD_'))]
     print(f"ICD-10 hierarchy tokens in vocab: {len(icd_tokens)}")
     print(f"Examples: {icd_tokens[:10]}")
 
@@ -722,6 +838,13 @@ def main():
 
     print("Starting training...")
     trainer.train()
+
+    if trainer.stopped_early:
+        print("Training stopped early (signal/runtime limit) - checkpoint already saved. "
+              "Rerun with --resume_from_checkpoint pointing at the newest checkpoint "
+              "folder to continue.")
+        wandb.finish()
+        return
 
     final_dir = Path(args.output_dir) / "final"
     final_dir.mkdir(parents=True, exist_ok=True)
