@@ -287,6 +287,11 @@ def merge_with_gemma_tokenizer(
     guaranteed |= {f"CAT_{n:02d}" for n in range(100)}
     guaranteed |= {f"CAT_{d}{l}" for d in string.digits for l in letters}
     guaranteed |= {f"EXT_{c}" for c in string.digits + "".join(letters)}
+    # Code-block delimiters for generation-time parsing (see _generate_codes
+    # in train_unified_tokenizer.py). Added as plain added-tokens to Gemma -
+    # the old BpeTrainer '<'/'>' merge restriction doesn't apply since these
+    # bypass BPE entirely.
+    guaranteed |= {"<ICD_START>", "<ICD_END>"}
     missing_guaranteed = guaranteed - icd10_vocab
     print(f"Guaranteed factorized tokens: {len(guaranteed)} "
           f"(not learned by BPE: {len(missing_guaranteed)})")

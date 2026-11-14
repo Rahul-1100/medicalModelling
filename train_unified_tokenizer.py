@@ -146,6 +146,8 @@ class UnifiedICD10Dataset(Dataset):
         # Build conversation - hierarchy tokens are matched LITERALLY by the unified
         # tokenizer's added-vocabulary and encoded as single tokens.
         if self.response in ("icd10", "icd10_custom"):
+            # Delimit the code block so generation-time parsing is deterministic
+            codes_str = "<ICD_START>" + codes_str + "<ICD_END>"
             assistant_response = assistant_response_icd10 + codes_str
         else:
             assistant_response = assistant_response_explanation
@@ -624,8 +626,22 @@ class UnifiedTrainer:
 
         codes = []
         chap, cat, sub, ext = "", "", "", ""
+        # Parse inside <ICD_START>...<ICD_END> when present (deterministic span);
+        # if the model never emits them (undertrained), fall back to scanning
+        # everything, matching the old behavior.
+        inside = True
         for t in tokens:
             t = str(t).lstrip("▁ ")
+            if t == "<ICD_START>":
+                inside = True
+                chap, cat, sub, ext = "", "", "", ""
+                continue
+            if t == "<ICD_END>":
+                if cat:
+                    codes.append(self._reassemble_code(chap, cat, sub, ext))
+                break
+            if not inside:
+                continue
             if not t.startswith(("CHAP_", "CAT_", "SUBCAT_", "EXT_")):
                 continue
             if t.startswith("CHAP_"):
@@ -639,7 +655,7 @@ class UnifiedTrainer:
                 sub = t[7:]
             elif t.startswith("EXT_"):
                 ext = t[4:]
-        if cat:
+        if cat and inside:
             codes.append(self._reassemble_code(chap, cat, sub, ext))
         return codes
 
