@@ -746,6 +746,16 @@ def generate_icd10_codes(model, tokenizer, user_prompt: str, system_prompt: str 
 # ============================================================
 # MAIN
 # ============================================================
+def _load_jsonl(path: str) -> List[dict]:
+    data = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                data.append(json.loads(line))
+    return data
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train MedGemma with Unified Hierarchical ICD-10 Tokenizer")
     parser.add_argument('--data_source', type=str, default="synth", choices=["synth", "jsonl"],
@@ -774,47 +784,75 @@ def main():
                         help="Path to a checkpoint folder (e.g., ./checkpoints_unified/checkpoint-step-30000) to resume")
     parser.add_argument('--response_mode', type=str, default="icd10_custom",
                         choices=["icd10_custom", "explanation", "icd10"])
+    parser.add_argument('--train_path', type=str, default=None,
+                        help="JSONL with training rows (e.g. splits/synth/train.jsonl). "
+                             "Overrides --data_source/--data_path when set.")
+    parser.add_argument('--val_path', type=str, default=None,
+                        help="JSONL with validation rows (e.g. splits/synth/val.jsonl). "
+                             "If omitted with --train_path, an internal 90/10 val split "
+                             "is drawn from train_path.")
+    parser.add_argument('--test_path', type=str, default=None,
+                        help="JSONL with held-out test rows (e.g. splits/synth/test.jsonl). "
+                             "Loaded for reference only - never used in training.")
     parser.add_argument('--icd10_tokenizer_path', type=str, default=None,
                         help="DEPRECATED/IGNORED: the standalone ICD-10 BPE is only a build-time artifact")
     args = parser.parse_args()
 
     wandb.init(project="medgemma-unified-icd10", config=vars(args))
 
-    if args.data_source == "synth":
-        from datasets import load_dataset, load_from_disk
-        dataset = None
-        try:
-            dataset = load_dataset(args.synth_dataset, cache_dir=args.synth_cache_dir)
-            print(f"Synth dataset loaded from HF hub: {args.synth_dataset}")
-        except Exception as e:
-            print(f"load_dataset failed ({e}), trying load_from_disk fallback...")
-            try:
-                dataset = load_from_disk(args.synth_cache_dir)
-                print(f"Synth dataset loaded via load_from_disk: {args.synth_cache_dir}")
-            except Exception as e2:
-                raise RuntimeError(f"Could not load synth dataset from hub or disk: {e2}")
-        split = 'train' if 'train' in dataset else list(dataset.keys())[0]
-        all_data = list(dataset[split])
-        for item in all_data:
-            c = item.get("codes")
-            if isinstance(c, str):
-                c = c.strip().lstrip('[').rstrip(']')
-                item["codes"] = [x.strip(" '\"") for x in c.split(',') if x.strip(" '\"")]
-            elif not isinstance(c, list):
-                item["codes"] = []
-        print(f"Synth dataset rows: {len(all_data)}")
+    # Explicit split files take precedence: train/val/test come straight from disk
+    # so every run (and every method being compared) sees identical data.
+    if args.train_path:
+        train_data = _load_jsonl(args.train_path)
+        if args.val_path:
+            val_data = _load_jsonl(args.val_path)
+        else:
+            # Fallback: draw an internal 90/10 val split from train only (seeded)
+            set_seed(args.seed)
+            random.shuffle(train_data)
+            split_idx = int(len(train_data) * 0.9)
+            val_data = train_data[split_idx:]
+            train_data = train_data[:split_idx]
+        test_data = _load_jsonl(args.test_path) if args.test_path else []
+        print(f"Loaded from split files: {len(train_data)} train / "
+              f"{len(val_data)} val / {len(test_data)} test samples.")
     else:
-        print(f"Loading data from {args.data_path}...")
-        with open(args.data_path, "r", encoding="utf-8") as f:
-            all_data = [json.loads(line) for line in f]
+        if args.data_source == "synth":
+            from datasets import load_dataset, load_from_disk
+            dataset = None
+            try:
+                dataset = load_dataset(args.synth_dataset, cache_dir=args.synth_cache_dir)
+                print(f"Synth dataset loaded from HF hub: {args.synth_dataset}")
+            except Exception as e:
+                print(f"load_dataset failed ({e}), trying load_from_disk fallback...")
+                try:
+                    dataset = load_from_disk(args.synth_cache_dir)
+                    print(f"Synth dataset loaded via load_from_disk: {args.synth_cache_dir}")
+                except Exception as e2:
+                    raise RuntimeError(f"Could not load synth dataset from hub or disk: {e2}")
+            split = 'train' if 'train' in dataset else list(dataset.keys())[0]
+            all_data = list(dataset[split])
+            for item in all_data:
+                c = item.get("codes")
+                if isinstance(c, str):
+                    c = c.strip().lstrip('[').rstrip(']')
+                    item["codes"] = [x.strip(" '\"") for x in c.split(',') if x.strip(" '\"")]
+                elif not isinstance(c, list):
+                    item["codes"] = []
+            print(f"Synth dataset rows: {len(all_data)}")
+        else:
+            print(f"Loading data from {args.data_path}...")
+            with open(args.data_path, "r", encoding="utf-8") as f:
+                all_data = [json.loads(line) for line in f]
 
-    # Fix seed so train/eval split is identical if resuming after a slurm limit
-    set_seed(args.seed)
-    random.shuffle(all_data)
-    split_idx = int(len(all_data) * 0.9)
-    train_data = all_data[:split_idx]
-    eval_data = all_data[split_idx:]
-    print(f"Loaded {len(train_data)} training samples and {len(eval_data)} evaluation samples.")
+        # Fix seed so train/eval split is identical if resuming after a slurm limit
+        set_seed(args.seed)
+        random.shuffle(all_data)
+        split_idx = int(len(all_data) * 0.9)
+        train_data = all_data[:split_idx]
+        val_data = all_data[split_idx:]
+        test_data = []
+        print(f"Loaded {len(train_data)} training samples and {len(val_data)} evaluation samples.")
 
     print(f"Loading unified tokenizer from {args.unified_tokenizer_dir}...")
     tokenizer = AutoTokenizer.from_pretrained(args.unified_tokenizer_dir)
@@ -831,9 +869,12 @@ def main():
         max_text_length=args.max_text_length, choose_response=args.response_mode
     )
     eval_dataset = UnifiedICD10Dataset(
-        eval_data, tokenizer,
+        val_data, tokenizer,
         max_text_length=args.max_text_length, choose_response=args.response_mode
     )
+    if test_data:
+        print(f"[Test] {len(test_data)} held-out test rows loaded from {args.test_path} "
+              f"- not used during training; evaluate separately after training.")
 
     print("Initializing model...")
     model = MedGemmaUnified(

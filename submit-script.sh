@@ -2,6 +2,7 @@
 #SBATCH --job-name="ICD10_custom"
 #SBATCH --partition=ampere
 #SBATCH --time=32:00:00
+#SBATCH --signal=B:USR1@600            # SIGUSR1 to the batch step 10 min before the time limit -> graceful checkpoint & exit
 #SBATCH --nodes=1
 #SBATCH --mem=64G
 #SBATCH --cpus-per-task=8
@@ -40,4 +41,6 @@ python train_unified_tokenizer.py \
     --batch_size 4 \
     --gradient_accumulation 4 \
     --learning_rate 2e-4 \
-    --max_text_length 2048
+    --max_text_length 2048 \
+    --save_steps 5000 \
+    --max_runtime_minutes 1860
