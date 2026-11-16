@@ -28,6 +28,7 @@ os.environ["HF_HOME"] = os.path.expanduser("~/.cache/huggingface")
 # CRITICAL: Import unsloth BEFORE transformers and peft!
 import unsloth
 from unsloth import FastLanguageModel
+import gc
 
 import json
 import random
@@ -373,6 +374,15 @@ class UnifiedTrainer:
         h, m = divmod(m, 60)
         return f"{h:02d}:{m:02d}:{s:02d}" if h > 0 else f"{m:02d}:{s:02d}"
 
+    @staticmethod
+    def _free_memory():
+        """Release cached GPU blocks and Python garbage. Called at epoch
+        boundaries and around checkpoint saves - never per step, since
+        empty_cache() forces CUDA allocator sync and costs throughput."""
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
     def train(self):
         test = True
         train_start_time = time.time()
@@ -520,7 +530,11 @@ class UnifiedTrainer:
 
                 # Save checkpoint every N steps (state = next step to run)
                 if self.args.save_steps > 0 and global_step % self.args.save_steps == 0:
+                    # Free step-local references so the save has headroom
+                    # (save_pretrained serializes the full embedding matrix).
+                    del batch, input_ids, attention_mask, labels, outputs, loss
                     self.save_checkpoint(epoch, step + 1, global_step)
+                    self._free_memory()
 
             if stop:
                 break
@@ -540,6 +554,7 @@ class UnifiedTrainer:
 
     def evaluate(self, epoch):
         self.model.eval()
+        self._free_memory()
         total_loss = 0
         with torch.no_grad():
             for batch in self.eval_loader:
@@ -561,6 +576,7 @@ class UnifiedTrainer:
         if wandb.run:
             wandb.log(metrics)
         self.model.train()
+        self._free_memory()
         return avg_loss
 
     def evaluate_generation(self, epoch, num_samples=GEN_EVAL_SAMPLES, max_new_tokens=GEN_MAX_NEW_TOKENS):
